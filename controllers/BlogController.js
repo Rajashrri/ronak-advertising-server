@@ -234,6 +234,43 @@ const updateSeo = async (req, res) => {
     });
   }
 };
+
+const changeFeatured = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const blog = await Blog.findById(id);
+
+    if (!blog) {
+      return res.status(404).json({
+        success: false,
+        message: "Blog not found",
+      });
+    }
+
+    blog.featured = blog.featured === 1 ? 0 : 1;
+
+    await blog.save();
+
+    return res.status(200).json({
+      success: true,
+      message:
+        blog.featured === 1
+          ? "Blog marked as Featured"
+          : "Blog removed from Featured",
+      data: blog,
+    });
+  } catch (error) {
+    console.log(error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong",
+    });
+  }
+};
+
+
 module.exports = {
   addBlog,
   getBlogs,
@@ -242,4 +279,5 @@ module.exports = {
   updateBlog,
   getSeoById,
   updateSeo,
+  changeFeatured
 };

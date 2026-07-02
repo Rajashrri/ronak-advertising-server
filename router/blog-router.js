@@ -3,9 +3,10 @@ const router = express.Router();
 const blogUpload = require("../middlewares/blogUpload");
 
 const upload = require("../middlewares/upload");
-const { addBlog,getBlogs,deleteBlog,updateBlog, getBlogById,  getSeoById,
+const { addBlog,getBlogs,deleteBlog,updateBlog, getBlogById,  getSeoById,changeFeatured,
   updateSeo,} = require("../controllers/BlogController");
 
+router.patch("/change-featured/:id", changeFeatured);
 
 router.post(
   "/add-blog",
