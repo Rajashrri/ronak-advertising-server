@@ -1,0 +1,274 @@
+const nodemailer = require("nodemailer");
+
+const {
+  getPasswordResetTemplate,
+  getWelcomeEmailTemplate,
+  getLoginOTPTemplate,
+  getForgotPasswordOTPTemplate,
+  getForgotPasswordLinkTemplate
+} = require("../utils/helper/email.helper"); 
+
+const crypto = require("crypto");
+
+
+const sendEmail = async ({ to, subject, text, html, attachments }) => {
+  if (!to) {
+    throw new Error("No recipients defined");
+  }
+
+  
+  const useStaticOTP = process.env.ENABLE_STATIC_OTP_PROD === 'true';
+  
+  if (useStaticOTP) {
+    console.log(`[STATIC OTP MODE] Email sending bypassed for ${to}`);
+    console.log(`Subject: ${subject}`);
+    return; // Exit early, don't send email
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT,
+    secure: process.env.SMTP_SECURE === "true" || false,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+    connectionTimeout: 300000, // 5 minutes
+    greetingTimeout: 300000,   // 5 minutes
+    socketTimeout: 300000,     // 5 minutes
+  });
+
+  try {
+    const mailOptions = {
+      from: `" DIIGIIHOST" <${process.env.SMTP_USER}>`,
+      to,
+      subject,
+      text,
+      html,
+    };
+
+    // Add attachments if provided
+    if (attachments && attachments.length > 0) {
+      mailOptions.attachments = attachments;
+    }
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✅ Email sent successfully to ${to}`);
+    console.log(`Message ID: ${info.messageId}`);
+    
+    return info;
+    
+  } catch (error) {
+    console.error(`❌ Error sending email to ${to}:`, error.message);
+    
+    // Log more details for debugging
+    if (error.code) {
+      console.error(`Error Code: ${error.code}`);
+    }
+    if (error.response) {
+      console.error(`SMTP Response: ${error.response}`);
+    }
+    
+    throw new Error(`Failed to send email: ${error.message}`);
+  } finally {
+    // Close the transporter connection
+    transporter.close();
+  }
+};
+
+// Send Login OTP Email
+const sendLoginOTPEmail = async (to, username, otp, expiryMinutes = 10) => {
+  const html = getLoginOTPTemplate(username, otp, expiryMinutes);
+  const text = `Dear ${username},
+
+We received a request to log in to your DIIGIIHOST account.
+
+Please use the One-Time Password (OTP) below to complete your login:
+
+Login OTP: ${otp}
+
+This OTP is valid for ${expiryMinutes} minutes. For security reasons, please do not share this code with anyone.
+
+If you did not initiate this login request, please contact our support team immediately.
+
+Regards,
+Team DIIGIIHOST`;
+
+  await sendEmail({
+    to,
+    subject: "Your DIIGIIHOST Login OTP",
+    text,
+    html,
+  });
+};
+
+// Send Forgot Password OTP Email
+const sendForgotPasswordOTPEmail = async (to, username, otp, expiryMinutes = 10) => {
+  const html = getForgotPasswordOTPTemplate(username, otp, expiryMinutes);
+  const text = `Dear ${username},
+
+We received a request to reset the password for your DIIGIIHOST account.
+
+Please use the One-Time Password (OTP) below to proceed with resetting your password:
+
+Password Reset OTP: ${otp}
+
+This OTP is valid for ${expiryMinutes} minutes and can be used only once. For security reasons, please do not share this OTP with anyone.
+
+If you did not request a password reset, please ignore this email or contact our support team immediately.
+
+Regards,
+Team DIIGIIHOST`;
+
+  await sendEmail({
+    to,
+    subject: "DIIGIIHOST – Password Reset OTP",
+    text,
+    html,
+  });
+};
+
+
+//resendotp
+
+// email config file me ye naya function add karo
+
+// =======================================
+// RESEND LOGIN OTP EMAIL
+// =======================================
+const sendResendOTPEmail = async (
+  to,
+  username,
+  otp,
+  expiryMinutes = 10
+) => {
+  const html = getLoginOTPTemplate(
+    username,
+    otp,
+    expiryMinutes
+  );
+
+  const text = `Dear ${username},
+
+A new verification code has been requested for your DIIGIIHOST account.
+
+Your New OTP: ${otp}
+
+This OTP is valid for ${expiryMinutes} minutes.
+
+If you did not request this code, please contact support immediately.
+
+Regards,
+Team DIIGIIHOST`;
+
+  await sendEmail({
+    to,
+    subject: "Your DIIGIIHOST Resend OTP Code",
+    text,
+    html,
+  });
+};
+
+//reset link
+
+const sendForgotPasswordLinkEmail = async (
+  to,
+  username,
+  resetLink
+) => {
+  // ✅ New Template Use Here
+  const html = getForgotPasswordLinkTemplate(
+    username,
+    resetLink,
+    15
+  );
+
+  const text = `Dear ${username},
+
+We received a request to reset your password.
+
+Reset Password Link:
+${resetLink}
+
+This link is valid for 15 minutes.
+
+If you did not request this password reset, please ignore this email.
+
+Regards,
+Team DIIGIIHOST`;
+
+  await sendEmail({
+    to,
+    subject: " DIIGIIHOST - Reset Password Link",
+    text,
+    html,
+  });
+};
+// Send Welcome Email with QR Code
+const sendWelcomeEmail = async (
+  to,
+  username,
+  temporaryPassword,
+  qrCodeBuffer,
+  secret
+) => {
+  const html = getWelcomeEmailTemplate(
+    username,
+    to,
+    temporaryPassword,
+    secret
+  );
+
+  const text = `Congratulations! Your DIIGIIHOST Account Is Ready
+
+Dear ${username},
+
+Congratulations! Your account has been successfully created on DIIGIIHOST.
+
+You can access your account using the credentials below:
+
+Login Details
+Email: ${to}
+Password: ${temporaryPassword}
+
+Click here to log in: ${process.env.FRONTEND_URL || "http://localhost:3000"}/login
+
+For enhanced security, please set up your authenticator using the key provided below:
+
+Authenticator Setup Key: ${secret}
+
+If you have any questions or need assistance, feel free to reach out to us.
+
+Warm regards,
+Team DIIGIIHOST
+
+---
+© ${new Date().getFullYear()} DIIGIIHOST. All rights reserved.
+This is an automated message, please do not reply to this email.
+`;
+
+  await sendEmail({
+    to,
+    subject: "Congratulations! Your DIIGIIHOST Account Is Ready",
+    text,
+    html,
+    attachments: qrCodeBuffer ? [
+      {
+        filename: "qrcode.png",
+        content: qrCodeBuffer,
+        cid: "qrcode@wefanss",
+      },
+    ] : undefined,
+  });
+};
+
+
+module.exports = {
+  sendEmail,
+  sendLoginOTPEmail,
+  sendForgotPasswordOTPEmail,
+  sendWelcomeEmail,
+  sendResendOTPEmail,
+  sendForgotPasswordLinkEmail
+  
+};
