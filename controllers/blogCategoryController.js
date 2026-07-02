@@ -135,10 +135,47 @@ const deleteCategory = async (req, res) => {
     });
   }
 };
+
+const changeCategoryStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const category = await BlogCategory.findById(id);
+
+    if (!category) {
+      return res.status(404).json({
+        success: false,
+        message: "Category not found",
+      });
+    }
+
+    category.status = category.status === 1 ? 0 : 1;
+
+    await category.save();
+
+    return res.status(200).json({
+      success: true,
+      message:
+        category.status === 1
+          ? "Category Activated Successfully"
+          : "Category Deactivated Successfully",
+      data: category,
+    });
+  } catch (error) {
+    console.log(error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong",
+    });
+  }
+};
+
 module.exports = {
   addCategory,
   getCategories,
   getCategoryById,
   updateCategory,
-  deleteCategory
+  deleteCategory,
+  changeCategoryStatus
 };

@@ -6,7 +6,8 @@ const {
   getCategories,
   getCategoryById,
   updateCategory,
-  deleteCategory
+  deleteCategory,
+  changeCategoryStatus
 } = require("../controllers/blogCategoryController");
 
 router.post("/add-category", addCategory);
@@ -17,4 +18,9 @@ router.get("/:id", getCategoryById);
 
 router.put("/update/:id", updateCategory);
 router.delete("/delete/:id", deleteCategory);
+
+router.patch(
+  "/change-status/:id",
+  changeCategoryStatus
+);
 module.exports = router;

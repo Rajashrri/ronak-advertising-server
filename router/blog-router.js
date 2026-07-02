@@ -3,7 +3,7 @@ const router = express.Router();
 const blogUpload = require("../middlewares/blogUpload");
 
 const upload = require("../middlewares/upload");
-const { addBlog,getBlogs,deleteBlog,updateBlog, getBlogById,  getSeoById,changeFeatured,
+const { addBlog,getBlogs,deleteBlog,updateBlog, getBlogById,  getSeoById,changeFeatured,changeBlogStatus,
   updateSeo,} = require("../controllers/BlogController");
 
 router.patch("/change-featured/:id", changeFeatured);
@@ -34,7 +34,7 @@ router.get(
 );
 
 
-
+router.patch("/change-status/:id", changeBlogStatus);
 router.get("/blog-seo/:id", getSeoById);
 
 router.put("/blog-updateseo/:id", updateSeo);

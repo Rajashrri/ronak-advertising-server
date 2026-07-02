@@ -269,7 +269,38 @@ const changeFeatured = async (req, res) => {
     });
   }
 };
+const changeBlogStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
 
+    const blog = await Blog.findById(id);
+
+    if (!blog) {
+      return res.status(404).json({
+        success: false,
+        message: "Blog not found",
+      });
+    }
+
+    blog.status = blog.status === 1 ? 0 : 1;
+
+    await blog.save();
+
+    res.status(200).json({
+      success: true,
+      message:
+        blog.status === 1
+          ? "Blog Activated Successfully"
+          : "Blog Deactivated Successfully",
+      data: blog,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong",
+    });
+  }
+};
 
 module.exports = {
   addBlog,
@@ -279,5 +310,6 @@ module.exports = {
   updateBlog,
   getSeoById,
   updateSeo,
-  changeFeatured
+  changeFeatured,
+  changeBlogStatus
 };
