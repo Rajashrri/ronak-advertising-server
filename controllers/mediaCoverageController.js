@@ -210,7 +210,33 @@ const changeMediaCoverageStatus = async (req, res) => {
     });
   }
 };
+const changeMediaCoverageFeatured = async (req, res) => {
+  try {
+    const media = await MediaCoverage.findById(req.params.id);
 
+    if (!media) {
+      return res.status(404).json({
+        success: false,
+        message: "Media Coverage not found.",
+      });
+    }
+
+    media.featured = media.featured === 1 ? 0 : 1;
+
+    await media.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Featured updated successfully.",
+      data: media,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 module.exports = {
   addMediaCoverage,
   listMediaCoverage,
@@ -218,4 +244,5 @@ module.exports = {
   updateMediaCoverage,
   deleteMediaCoverage,
   changeMediaCoverageStatus,
+  changeMediaCoverageFeatured
 };

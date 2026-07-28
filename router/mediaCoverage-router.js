@@ -10,6 +10,7 @@ const {
   updateMediaCoverage,
   deleteMediaCoverage,
   changeMediaCoverageStatus,
+  changeMediaCoverageFeatured
 } = require("../controllers/mediaCoverageController");
 
 // Add
@@ -59,5 +60,8 @@ router.patch(
   "/change-status/:id",
   changeMediaCoverageStatus
 );
-
+router.patch(
+  "/change-featured/:id",
+  changeMediaCoverageFeatured
+);
 module.exports = router;

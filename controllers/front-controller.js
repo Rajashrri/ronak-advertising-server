@@ -3,6 +3,8 @@ const BlogCategory = require("../models/BlogCategory");
 const Contact = require("../models/contact-model");
 const sendMail = require("../utils/sendMail");
 const Career = require("../models/Career");
+const Testimonial = require("../models/Testimonial");
+const Clientele = require("../models/Clientele");
 
 const fs = require("fs");
 const cloudinary = require("../utils/cloudinary");
@@ -195,9 +197,20 @@ const addContact = async (req, res) => {
 
 const getBlogs = async (req, res) => {
   try {
-    const blogs = await Blog.find({
-      status: 1,
-    })
+    const filter = { status: 1 };
+
+    if (req.query.category) {
+      const category = await BlogCategory.findOne({
+        slug: req.query.category,
+        status: 1,
+      });
+
+      if (category) {
+        filter.categoryId = category._id;
+      }
+    }
+
+    const blogs = await Blog.find(filter)
       .populate("categoryId", "categoryName slug")
       .sort({ createdAt: -1 });
 
@@ -214,7 +227,6 @@ const getBlogs = async (req, res) => {
     });
   }
 };
-
 const getBlogDetails = async (req, res) => {
   try {
     const blog = await Blog.findOne({
@@ -222,18 +234,37 @@ const getBlogDetails = async (req, res) => {
       status: 1,
     }).populate("categoryId", "categoryName slug");
 
+    if (!blog) {
+      return res.status(404).json({
+        success: false,
+        message: "Blog not found",
+      });
+    }
+
+    // Related Blogs (same category, current blog exclude)
+    const relatedBlogs = await Blog.find({
+      status: 1,
+      categoryId: blog.categoryId._id,
+      _id: { $ne: blog._id },
+    })
+      .populate("categoryId", "categoryName slug")
+      .sort({ createdAt: -1 })
+      .limit(3);
+
     return res.status(200).json({
       success: true,
       data: blog,
+      relatedBlogs,
     });
   } catch (error) {
+    console.log(error);
+
     return res.status(500).json({
       success: false,
       message: "Something went wrong",
     });
   }
 };
-
 
 const getBlogCategories = async (req, res) => {
   try {
@@ -256,12 +287,76 @@ const getBlogCategories = async (req, res) => {
 };
 
 
+const getFeaturedBlogs = async (req, res) => {
+  try {
+    const blogs = await Blog.find({
+      status: 1,
+      featured: 1,
+    })
+      .populate("categoryId", "categoryName slug")
+      .sort({ createdAt: -1 })
+      .limit(3);
 
+    return res.status(200).json({
+      success: true,
+      data: blogs,
+    });
+  } catch (error) {
+    console.log(error);
 
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong",
+    });
+  }
+};
+
+const getTestimonials = async (req, res) => {
+  try {
+    const testimonials = await Testimonial.find({
+      status: 1,
+    })
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      data: testimonials,
+    });
+  } catch (error) {
+    console.log(error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong",
+    });
+  }
+};
+
+const getClients = async (req, res) => {
+  try {
+    const clients = await Clientele.find({ status: 1 })
+      .select("clientName clientLogo")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: clients.length,
+      data: clients,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 module.exports = {
   getBlogs,
   getBlogDetails,
   getBlogCategories,
   addContact,
-  addCareer
+  addCareer,
+  getFeaturedBlogs,
+  getTestimonials,
+  getClients
 };

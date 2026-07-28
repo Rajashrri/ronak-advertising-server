@@ -29,6 +29,11 @@ const mediaCoverageSchema = new mongoose.Schema(
       default: 1,
       enum: [0, 1],
     },
+    featured: {
+  type: Number,
+  default: 0,
+  enum: [0, 1],
+},
   },
   {
     timestamps: true,
