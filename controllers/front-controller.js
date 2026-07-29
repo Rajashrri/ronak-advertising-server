@@ -5,6 +5,8 @@ const sendMail = require("../utils/sendMail");
 const Career = require("../models/Career");
 const Testimonial = require("../models/Testimonial");
 const Clientele = require("../models/Clientele");
+const MediaCoverage = require("../models/MediaCoverage");
+const Article = require("../models/Article");
 
 const fs = require("fs");
 const cloudinary = require("../utils/cloudinary");
@@ -350,6 +352,65 @@ const getClients = async (req, res) => {
     });
   }
 };
+
+const getFeaturedMedia = async (req, res) => {
+  try {
+    const media = await MediaCoverage.find({
+      status: 1,
+      featured: 1,
+    })
+      .sort({ createdAt: -1 })
+      .limit(2);
+
+    res.status(200).json({
+      success: true,
+      data: media,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+const getMediaCoverage = async (req, res) => {
+  try {
+    const media = await MediaCoverage.find({
+      status: 1,
+    }).sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: media.length,
+      data: media,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+const getArticles = async (req, res) => {
+  try {
+    const articles = await Article.find({
+      status: 1,
+    }).sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: articles.length,
+      data: articles,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 module.exports = {
   getBlogs,
   getBlogDetails,
@@ -358,5 +419,8 @@ module.exports = {
   addCareer,
   getFeaturedBlogs,
   getTestimonials,
-  getClients
+  getClients,
+  getFeaturedMedia,
+  getMediaCoverage,
+  getArticles
 };

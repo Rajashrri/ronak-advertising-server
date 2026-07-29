@@ -11,7 +11,10 @@ const {
   addCareer,
   getFeaturedBlogs,
   getTestimonials,
-  getClients
+  getClients,
+  getFeaturedMedia,
+    getMediaCoverage,
+     getArticles,
 } = require("../controllers/front-controller");
 
 const resumeUpload = require("../utils/resumeUpload");
@@ -28,4 +31,7 @@ router.post("/add-contact", addContact);
 router.get("/featured-blogs", getFeaturedBlogs);
 router.get("/testimonials", getTestimonials);
 router.get("/clients", getClients);
+router.get("/featured-media", getFeaturedMedia);
+router.get("/media-coverage", getMediaCoverage);
+router.get("/articles", getArticles);
 module.exports = router;
