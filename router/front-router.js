@@ -15,6 +15,7 @@ const {
   getFeaturedMedia,
     getMediaCoverage,
      getArticles,
+       getLocations,
 } = require("../controllers/front-controller");
 
 const resumeUpload = require("../utils/resumeUpload");
@@ -34,4 +35,5 @@ router.get("/clients", getClients);
 router.get("/featured-media", getFeaturedMedia);
 router.get("/media-coverage", getMediaCoverage);
 router.get("/articles", getArticles);
+router.get("/locations", getLocations);
 module.exports = router;

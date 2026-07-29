@@ -7,6 +7,7 @@ const Testimonial = require("../models/Testimonial");
 const Clientele = require("../models/Clientele");
 const MediaCoverage = require("../models/MediaCoverage");
 const Article = require("../models/Article");
+const Location = require("../models/Location");
 
 const fs = require("fs");
 const cloudinary = require("../utils/cloudinary");
@@ -411,6 +412,27 @@ const getArticles = async (req, res) => {
     });
   }
 };
+
+const getLocations = async (req, res) => {
+  try {
+    const locations = await Location.find({
+      status: 1,
+    })
+      .select("locationName image")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: locations.length,
+      data: locations,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 module.exports = {
   getBlogs,
   getBlogDetails,
@@ -422,5 +444,6 @@ module.exports = {
   getClients,
   getFeaturedMedia,
   getMediaCoverage,
-  getArticles
+  getArticles,
+  getLocations
 };
