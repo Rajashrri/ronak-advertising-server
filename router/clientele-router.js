@@ -10,7 +10,7 @@ const {
   updateClientele,
   deleteClientele,
   changeStatus,
-} = require("../controllers/  ");
+} = require("../controllers/clienteleController");
 
 router.post(
   "/add-client",
