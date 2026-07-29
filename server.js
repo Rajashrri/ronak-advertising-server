@@ -24,7 +24,9 @@ const clienteleRoutes = require("./router/clientele-router");
 const coreTeamRouter = require("./router/coreTeam-router");
 const locationRouter = require("./router/location-router");
 const locationMainRouter = require("./router/locationMain-router");
+const caseStudyRoutes = require("./router/caseStudyRoutes");
 
+const caseStudyTestimonialRoutes = require("./router/caseStudyTestimonialRoutes");
 
 const mediaCoverageRouter = require("./router/mediaCoverage-router");
 
@@ -83,6 +85,10 @@ app.use("/api/list", listRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/clientele", clienteleRoutes);
 
+app.use(
+  "/api/case-study-testimonial",
+  caseStudyTestimonialRoutes
+);
 app.use("/api/testimonial", testimonialRoutes);
 app.use("/api/articles", articlesRoutes);
 app.use("/api/location-main", locationMainRouter);
@@ -95,6 +101,7 @@ app.use(
 
 app.use("/api/core-team", coreTeamRouter);
 
+app.use("/api/case-study", caseStudyRoutes);
 
 app.use("/api/media-coverage", mediaCoverageRouter);
 
