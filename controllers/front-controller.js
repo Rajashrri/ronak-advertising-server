@@ -14,15 +14,12 @@ const Newsletter = require("../models/Newsletter");
 const fs = require("fs");
 const cloudinary = require("../utils/cloudinary");
 const uploadResume = async (filePath) => {
-  const result = await cloudinary.uploader.upload(
-    filePath,
-    {
-      folder: "resume",
-      resource_type: "raw",
-       type: "upload", // public delivery
-  access_mode: "public",
-    }
-  );
+  const result = await cloudinary.uploader.upload(filePath, {
+    folder: "resume",
+    resource_type: "raw",
+    type: "upload", // public delivery
+    access_mode: "public",
+  });
 
   fs.unlinkSync(filePath);
 
@@ -46,7 +43,7 @@ const addCareer = async (req, res) => {
       !email ||
       !mobile ||
       !experience ||
-       !position ||
+      !position ||
       !location
     ) {
       return res.status(400).json({
@@ -121,11 +118,10 @@ const addCareer = async (req, res) => {
 
       <br>
       <p>Regards,<br><b>DIGIIHOST</b></p>
-      `
+      `,
     ).catch((err) => {
       console.log("Career Mail Error:", err.message);
     });
-
   } catch (error) {
     console.log("Career Error:", error);
 
@@ -146,8 +142,7 @@ const subscribeNewsletter = async (req, res) => {
       });
     }
 
-    const emailRegex =
-      /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+    const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
 
     if (!emailRegex.test(email)) {
       return res.status(400).json({
@@ -191,11 +186,10 @@ const subscribeNewsletter = async (req, res) => {
       <br>
 
       <p>Regards,<br><b>Ronak Advertising</b></p>
-      `
+      `,
     ).catch((err) => {
       console.log("Newsletter Mail Error :", err.message);
     });
-
   } catch (error) {
     console.log(error);
 
@@ -223,41 +217,38 @@ const addContact = async (req, res) => {
       message,
     });
 
-    // Mail send separately
-    try {
-      await sendMail(
-        email,
-        "rajashri@digihost.in",
-
-        "New Contact Inquiry",
-        `
-        <p><b>Dear Admin,</b></p>
-
-        <p>A new contact enquiry has been submitted through the website.</p>
-
-        <p>You have received a new enquiry from <b>${fullName}</b>.</p>
-
-        <h3>Details:</h3>
-
-        <p><b>Name:</b> ${fullName}</p>
-        <p><b>Email:</b> ${email}</p>
-        <p><b>Phone:</b> ${phone}</p>
-        <p><b>Message:</b> ${message}</p>
-
-        <br>
-
-        <p>Regards,<br><b>Ronak Advertising</b></p>
-        `
-      );
-    } catch (mailError) {
-      console.error("Mail Error:", mailError.message);
-      // Sirf log karo, API fail mat karo
-    }
-
-    return res.status(200).json({
+    // Return response immediately
+    res.status(200).json({
       success: true,
       message: "Contact form submitted successfully",
       data: contact,
+    });
+
+    // Send mail in background
+    sendMail(
+      email,
+      "rajashri@digihost.in",
+      "New Contact Inquiry",
+      `
+  <p><b>Dear Admin,</b></p>
+
+  <p>A new contact enquiry has been submitted through the website.</p>
+
+  <p>You have received a new enquiry from <b>${fullName}</b>.</p>
+
+  <h3>Details:</h3>
+
+  <p><b>Name:</b> ${fullName}</p>
+  <p><b>Email:</b> ${email}</p>
+  <p><b>Phone:</b> ${phone}</p>
+  <p><b>Message:</b> ${message}</p>
+
+  <br>
+
+  <p>Regards,<br><b>Ronak Advertising</b></p>
+  `,
+    ).catch((err) => {
+      console.error("Background Mail Error:", err);
     });
   } catch (error) {
     console.log(error);
@@ -360,7 +351,6 @@ const getBlogCategories = async (req, res) => {
   }
 };
 
-
 const getFeaturedBlogs = async (req, res) => {
   try {
     const blogs = await Blog.find({
@@ -389,8 +379,7 @@ const getTestimonials = async (req, res) => {
   try {
     const testimonials = await Testimonial.find({
       status: 1,
-    })
-      .sort({ createdAt: -1 });
+    }).sort({ createdAt: -1 });
 
     return res.status(200).json({
       success: true,
@@ -558,7 +547,6 @@ const getCaseStudyDetail = async (req, res) => {
   }
 };
 
-
 const getCaseStudyTestimonials = async (req, res) => {
   try {
     const { slug } = req.params;
@@ -608,5 +596,5 @@ module.exports = {
   getLocations,
   getCaseStudies,
   getCaseStudyDetail,
-  getCaseStudyTestimonials
+  getCaseStudyTestimonials,
 };
