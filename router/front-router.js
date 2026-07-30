@@ -16,6 +16,9 @@ const {
     getMediaCoverage,
      getArticles,
        getLocations,
+        getCaseStudies,
+  getCaseStudyDetail,
+  getCaseStudyTestimonials
 } = require("../controllers/front-controller");
 
 const resumeUpload = require("../utils/resumeUpload");
@@ -36,4 +39,10 @@ router.get("/featured-media", getFeaturedMedia);
 router.get("/media-coverage", getMediaCoverage);
 router.get("/articles", getArticles);
 router.get("/locations", getLocations);
+router.get("/case-studies", getCaseStudies);
+router.get("/case-study/:slug", getCaseStudyDetail);
+router.get(
+  "/case-study/:slug/testimonials",
+  getCaseStudyTestimonials
+);
 module.exports = router;

@@ -8,6 +8,8 @@ const Clientele = require("../models/Clientele");
 const MediaCoverage = require("../models/MediaCoverage");
 const Article = require("../models/Article");
 const Location = require("../models/Location");
+const CaseStudy = require("../models/CaseStudy");
+const CaseStudyTestimonial = require("../models/CaseStudyTestimonial");
 
 const fs = require("fs");
 const cloudinary = require("../utils/cloudinary");
@@ -433,6 +435,94 @@ const getLocations = async (req, res) => {
     });
   }
 };
+
+const getCaseStudies = async (req, res) => {
+  try {
+    const caseStudies = await CaseStudy.find({
+      status: 1,
+    }).sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      data: caseStudies,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+const getCaseStudyDetail = async (req, res) => {
+  try {
+    const caseStudy = await CaseStudy.findOne({
+      slug: req.params.slug,
+      status: 1,
+    });
+
+    if (!caseStudy) {
+      return res.status(404).json({
+        success: false,
+        message: "Case Study not found",
+      });
+    }
+
+    // Current case ko exclude karke latest 2 case studies
+    const relatedCaseStudies = await CaseStudy.find({
+      status: 1,
+      _id: { $ne: caseStudy._id },
+    })
+      .sort({ createdAt: -1 })
+      .limit(2);
+
+    return res.status(200).json({
+      success: true,
+      data: caseStudy,
+      relatedCaseStudies,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+const getCaseStudyTestimonials = async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    const caseStudy = await CaseStudy.findOne({
+      slug,
+      status: 1,
+    });
+
+    if (!caseStudy) {
+      return res.status(404).json({
+        success: false,
+        message: "Case study not found",
+      });
+    }
+
+    const testimonials = await CaseStudyTestimonial.find({
+      caseStudyId: caseStudy._id,
+      status: 1,
+    }).sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      data: testimonials,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   getBlogs,
   getBlogDetails,
@@ -445,5 +535,8 @@ module.exports = {
   getFeaturedMedia,
   getMediaCoverage,
   getArticles,
-  getLocations
+  getLocations,
+  getCaseStudies,
+  getCaseStudyDetail,
+  getCaseStudyTestimonials
 };
