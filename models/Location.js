@@ -12,7 +12,10 @@ const locationSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-
+    slug: {
+      type: String,
+      unique: true,
+    },
     status: {
       type: Number,
       default: 1,
@@ -20,7 +23,7 @@ const locationSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 module.exports = mongoose.model("Location", locationSchema);

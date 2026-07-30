@@ -7,7 +7,13 @@ const deleteFromCloudinary = require("../utils/cloudinaryDelete");
 // =============================
 // ADD LOCATION MAIN
 // =============================
-
+const slugify = (text) =>
+  text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
 const addLocationMain = async (req, res) => {
   try {
     const {
@@ -17,6 +23,7 @@ const addLocationMain = async (req, res) => {
       detail,
       media,
       type,
+      slug,
       siteCode,
       latitude,
       longitude,
@@ -39,7 +46,7 @@ const addLocationMain = async (req, res) => {
     // Upload Featured Image
     const image = await uploadToCloudinary(
       req.files.image[0].path,
-      "location-main"
+      "location-main",
     );
 
     // Upload Gallery Images
@@ -49,7 +56,7 @@ const addLocationMain = async (req, res) => {
       for (const file of req.files.gallery) {
         const url = await uploadToCloudinary(
           file.path,
-          "location-main/gallery"
+          "location-main/gallery",
         );
 
         galleryImages.push(url);
@@ -65,6 +72,7 @@ const addLocationMain = async (req, res) => {
       detail,
       media,
       type,
+      slug,
       siteCode,
       latitude,
       longitude,
@@ -76,16 +84,13 @@ const addLocationMain = async (req, res) => {
       message: "Location added successfully.",
       data: locationMain,
     });
-
   } catch (error) {
-
     console.log(error);
 
     res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
@@ -95,7 +100,6 @@ const addLocationMain = async (req, res) => {
 
 const listLocationMain = async (req, res) => {
   try {
-
     const data = await LocationMain.find()
       .populate("locationId", "locationName")
       .sort({ createdAt: -1 });
@@ -104,14 +108,11 @@ const listLocationMain = async (req, res) => {
       success: true,
       data,
     });
-
   } catch (error) {
-
     res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
@@ -121,9 +122,10 @@ const listLocationMain = async (req, res) => {
 
 const locationMainDetail = async (req, res) => {
   try {
-
-    const data = await LocationMain.findById(req.params.id)
-      .populate("locationId", "locationName");
+    const data = await LocationMain.findById(req.params.id).populate(
+      "locationId",
+      "locationName",
+    );
 
     if (!data) {
       return res.status(404).json({
@@ -136,14 +138,11 @@ const locationMainDetail = async (req, res) => {
       success: true,
       data,
     });
-
   } catch (error) {
-
     res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
@@ -153,7 +152,6 @@ const locationMainDetail = async (req, res) => {
 
 const getActiveLocations = async (req, res) => {
   try {
-
     const locations = await Location.find({
       status: 1,
     })
@@ -166,14 +164,11 @@ const getActiveLocations = async (req, res) => {
       success: true,
       data: locations,
     });
-
   } catch (error) {
-
     res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
@@ -183,7 +178,6 @@ const getActiveLocations = async (req, res) => {
 
 const updateLocationMain = async (req, res) => {
   try {
-
     const {
       locationId,
       siteName,
@@ -191,6 +185,8 @@ const updateLocationMain = async (req, res) => {
       detail,
       media,
       type,
+      slug,
+
       siteCode,
       latitude,
       longitude,
@@ -207,6 +203,25 @@ const updateLocationMain = async (req, res) => {
 
     locationMain.locationId = locationId;
     locationMain.siteName = siteName;
+
+    // Update Slug
+    if (slug || siteName) {
+      const finalSlug = slugify(slug || siteName);
+
+      const existingSlug = await LocationMain.findOne({
+        slug: finalSlug,
+        _id: { $ne: locationMain._id },
+      });
+
+      if (existingSlug) {
+        return res.status(400).json({
+          success: false,
+          message: "Slug already exists.",
+        });
+      }
+
+      locationMain.slug = finalSlug;
+    }
     locationMain.ytVideoLink = ytVideoLink;
     locationMain.detail = detail;
     locationMain.media = media;
@@ -218,42 +233,37 @@ const updateLocationMain = async (req, res) => {
     // ================= Featured Image =================
 
     if (req.files?.image?.length) {
-
       if (locationMain.image) {
         await deleteFromCloudinary(locationMain.image);
       }
 
       locationMain.image = await uploadToCloudinary(
         req.files.image[0].path,
-        "location-main"
+        "location-main",
       );
     }
 
     // ================= Gallery =================
 
-  // ================= Gallery =================
+    // ================= Gallery =================
 
-if (req.files?.gallery?.length) {
+    if (req.files?.gallery?.length) {
+      // Existing gallery images ko preserve karo
+      const gallery = [...locationMain.mediaGallery];
 
-  // Existing gallery images ko preserve karo
-  const gallery = [...locationMain.mediaGallery];
+      // Upload new images and append
+      for (const file of req.files.gallery) {
+        const imageUrl = await uploadToCloudinary(
+          file.path,
+          "location-main/gallery",
+        );
 
-  // Upload new images and append
-  for (const file of req.files.gallery) {
+        gallery.push(imageUrl);
+      }
 
-    const imageUrl = await uploadToCloudinary(
-      file.path,
-      "location-main/gallery"
-    );
-
-    gallery.push(imageUrl);
-
-  }
-
-  // Save old + new images
-  locationMain.mediaGallery = gallery;
-
-}
+      // Save old + new images
+      locationMain.mediaGallery = gallery;
+    }
 
     await locationMain.save();
 
@@ -262,16 +272,13 @@ if (req.files?.gallery?.length) {
       message: "Location updated successfully.",
       data: locationMain,
     });
-
   } catch (error) {
-
     console.log(error);
 
     res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
@@ -281,16 +288,13 @@ if (req.files?.gallery?.length) {
 
 const deleteLocationMain = async (req, res) => {
   try {
-
     const locationMain = await LocationMain.findById(req.params.id);
 
     if (!locationMain) {
-
       return res.status(404).json({
         success: false,
         message: "Record not found.",
       });
-
     }
 
     // Delete Main Image
@@ -302,11 +306,9 @@ const deleteLocationMain = async (req, res) => {
     // Delete Gallery Images
 
     if (locationMain.mediaGallery.length) {
-
       for (const img of locationMain.mediaGallery) {
         await deleteFromCloudinary(img);
       }
-
     }
 
     await LocationMain.findByIdAndDelete(req.params.id);
@@ -315,14 +317,11 @@ const deleteLocationMain = async (req, res) => {
       success: true,
       message: "Location deleted successfully.",
     });
-
   } catch (error) {
-
     res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
@@ -332,20 +331,16 @@ const deleteLocationMain = async (req, res) => {
 
 const changeStatus = async (req, res) => {
   try {
-
     const locationMain = await LocationMain.findById(req.params.id);
 
     if (!locationMain) {
-
       return res.status(404).json({
         success: false,
         message: "Record not found.",
       });
-
     }
 
-    locationMain.status =
-      locationMain.status === 1 ? 0 : 1;
+    locationMain.status = locationMain.status === 1 ? 0 : 1;
 
     await locationMain.save();
 
@@ -354,20 +349,16 @@ const changeStatus = async (req, res) => {
       message: "Status updated successfully.",
       data: locationMain,
     });
-
   } catch (error) {
-
     res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
 const deleteGalleryImage = async (req, res) => {
   try {
-
     const { image } = req.body;
 
     const location = await LocationMain.findById(req.params.id);
@@ -384,7 +375,7 @@ const deleteGalleryImage = async (req, res) => {
 
     // Remove from MongoDB array
     location.mediaGallery = location.mediaGallery.filter(
-      (img) => img !== image
+      (img) => img !== image,
     );
 
     await location.save();
@@ -394,14 +385,11 @@ const deleteGalleryImage = async (req, res) => {
       message: "Image deleted successfully.",
       mediaGallery: location.mediaGallery,
     });
-
   } catch (error) {
-
     res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 module.exports = {
@@ -412,5 +400,5 @@ module.exports = {
   deleteLocationMain,
   changeStatus,
   getActiveLocations,
-  deleteGalleryImage
+  deleteGalleryImage,
 };

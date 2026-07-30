@@ -3,6 +3,13 @@ const { uploadToCloudinary } = require("../utils/upload");
 const deleteFromCloudinary = require("../utils/cloudinaryDelete");
 
 // ================= ADD =================
+const slugify = (text) =>
+  text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
 
 const addLocation = async (req, res) => {
   try {
@@ -12,6 +19,19 @@ const addLocation = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Location Name is required",
+      });
+    }
+
+    // Generate slug
+    const slug = slugify(locationName);
+
+    // Check duplicate slug
+    const existingSlug = await Location.findOne({ slug });
+
+    if (existingSlug) {
+      return res.status(400).json({
+        success: false,
+        message: "Location slug already exists",
       });
     }
 
@@ -29,23 +49,23 @@ const addLocation = async (req, res) => {
 
     const location = await Location.create({
       locationName,
+      slug,
       image,
       status: 1,
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "Location added successfully",
       data: location,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
   }
 };
-
 // ================= LIST =================
 
 const listLocations = async (req, res) => {
@@ -104,10 +124,29 @@ const updateLocation = async (req, res) => {
       });
     }
 
-    location.locationName = req.body.locationName;
+    // Update Location Name & Slug
+    if (req.body.locationName) {
+      location.locationName = req.body.locationName;
 
+      const slug = slugify(req.body.locationName);
+
+      const existingSlug = await Location.findOne({
+        slug,
+        _id: { $ne: location._id },
+      });
+
+      if (existingSlug) {
+        return res.status(400).json({
+          success: false,
+          message: "Location slug already exists",
+        });
+      }
+
+      location.slug = slug;
+    }
+
+    // Update Image
     if (req.files?.image?.length) {
-
       if (location.image) {
         await deleteFromCloudinary(location.image);
       }
@@ -120,13 +159,13 @@ const updateLocation = async (req, res) => {
 
     await location.save();
 
-    res.json({
+    return res.status(200).json({
       success: true,
       message: "Location updated successfully",
       data: location,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
@@ -156,7 +195,6 @@ const deleteLocation = async (req, res) => {
       success: true,
       message: "Location deleted successfully",
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -169,7 +207,6 @@ const deleteLocation = async (req, res) => {
 
 const changeStatus = async (req, res) => {
   try {
-
     const location = await Location.findById(req.params.id);
 
     if (!location) {
@@ -188,14 +225,11 @@ const changeStatus = async (req, res) => {
       message: "Status updated successfully",
       data: location,
     });
-
   } catch (error) {
-
     res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 

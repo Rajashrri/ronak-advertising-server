@@ -15,7 +15,11 @@ const locationMainSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+    },
     image: {
       type: String,
       required: true,
@@ -76,7 +80,7 @@ const locationMainSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 module.exports = mongoose.model("LocationMain", locationMainSchema);
