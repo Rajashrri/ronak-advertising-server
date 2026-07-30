@@ -10,7 +10,7 @@ const Article = require("../models/Article");
 const Location = require("../models/Location");
 const CaseStudy = require("../models/CaseStudy");
 const CaseStudyTestimonial = require("../models/CaseStudyTestimonial");
-
+const Newsletter = require("../models/Newsletter");
 const fs = require("fs");
 const cloudinary = require("../utils/cloudinary");
 const uploadResume = async (filePath) => {
@@ -135,7 +135,76 @@ const addCareer = async (req, res) => {
     });
   }
 };
+const subscribeNewsletter = async (req, res) => {
+  try {
+    const { email } = req.body;
 
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    const emailRegex =
+      /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid email",
+      });
+    }
+
+    const exist = await Newsletter.findOne({ email });
+
+    if (exist) {
+      return res.status(400).json({
+        success: false,
+        message: "Email already subscribed",
+      });
+    }
+
+    const subscriber = await Newsletter.create({
+      email,
+    });
+
+    // response first
+    res.status(200).json({
+      success: true,
+      message: "Subscribed successfully",
+      data: subscriber,
+    });
+
+    // Mail in background
+    sendMail(
+      email,
+      "rajashri@digihost.in",
+      "Newsletter Subscription",
+      `
+      <p><b>Dear Admin,</b></p>
+
+      <p>A new newsletter subscription has been received.</p>
+
+      <p><b>Email :</b> ${email}</p>
+
+      <br>
+
+      <p>Regards,<br><b>Ronak Advertising</b></p>
+      `
+    ).catch((err) => {
+      console.log("Newsletter Mail Error :", err.message);
+    });
+
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
 const addContact = async (req, res) => {
   try {
     const { fullName, phone, email, message } = req.body;
@@ -177,7 +246,7 @@ const addContact = async (req, res) => {
 
         <br>
 
-        <p>Regards,<br><b>DIGIIHOST</b></p>
+        <p>Regards,<br><b>Ronak Advertising</b></p>
         `
       );
     } catch (mailError) {
@@ -529,6 +598,7 @@ module.exports = {
   getBlogCategories,
   addContact,
   addCareer,
+  subscribeNewsletter,
   getFeaturedBlogs,
   getTestimonials,
   getClients,

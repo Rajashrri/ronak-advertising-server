@@ -1,6 +1,23 @@
 
 const Contact = require("../models/contact-model");
 const Career = require("../models/Career");
+const Newsletter = require("../models/Newsletter");
+
+const getNewsletter = async (req, res) => {
+  try {
+    const newsletter = await Newsletter.find().sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      data: newsletter,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
 
 // GET ALL CONTACTS
@@ -39,5 +56,5 @@ const getCareers = async (req, res) => {
 };
 module.exports = {
   getCareers,
-  getContacts
+  getContacts,getNewsletter
 };
