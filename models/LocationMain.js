@@ -72,7 +72,40 @@ const locationMainSchema = new mongoose.Schema(
       default: "",
       trim: true,
     },
+    metaTitle: {
+      type: String,
+      default: "",
+      trim: true,
+    },
 
+    metaKeywords: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    metaDescription: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    mainImageAlt: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    featuredImageAlt: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    schemaCode: {
+      type: String,
+      default: "",
+    },
     status: {
       type: Number,
       default: 1,

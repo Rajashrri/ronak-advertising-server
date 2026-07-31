@@ -392,6 +392,52 @@ const deleteGalleryImage = async (req, res) => {
     });
   }
 };
+
+
+const updateLocationSeo = async (req, res) => {
+  try {
+    const {
+      metaTitle,
+      metaKeywords,
+      metaDescription,
+      mainImageAlt,
+      featuredImageAlt,
+      schemaCode,
+    } = req.body;
+
+    const location = await LocationMain.findById(req.params.id);
+
+    if (!location) {
+      return res.status(404).json({
+        success: false,
+        message: "Location not found",
+      });
+    }
+
+    location.metaTitle = metaTitle;
+    location.metaKeywords = metaKeywords;
+    location.metaDescription = metaDescription;
+    location.mainImageAlt = mainImageAlt;
+    location.featuredImageAlt = featuredImageAlt;
+    location.schemaCode = schemaCode;
+
+    await location.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "SEO updated successfully",
+      data: location,
+    });
+
+  } catch (error) {
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
+};
 module.exports = {
   addLocationMain,
   listLocationMain,
@@ -401,4 +447,5 @@ module.exports = {
   changeStatus,
   getActiveLocations,
   deleteGalleryImage,
+  updateLocationSeo
 };
