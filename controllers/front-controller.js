@@ -13,6 +13,7 @@ const CaseStudyTestimonial = require("../models/CaseStudyTestimonial");
 const Newsletter = require("../models/Newsletter");
 const fs = require("fs");
 const cloudinary = require("../utils/cloudinary");
+const LocationMain = require("../models/LocationMain");
 const uploadResume = async (filePath) => {
   const result = await cloudinary.uploader.upload(filePath, {
     folder: "resume",
@@ -475,12 +476,9 @@ const getArticles = async (req, res) => {
 
 const getLocations = async (req, res) => {
   try {
-    const locations = await Location.find({
-      status: 1,
-    })
-      .select("locationName image")
-      .sort({ createdAt: -1 });
-
+   const locations = await Location.find({ status: 1 }).sort({
+  createdAt: -1,
+});
     return res.status(200).json({
       success: true,
       count: locations.length,
@@ -580,6 +578,94 @@ const getCaseStudyTestimonials = async (req, res) => {
   }
 };
 
+const getLocationBySlug = async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    // Location Master
+    const location = await Location.findOne({
+      slug,
+      status: 1,
+    });
+
+    if (!location) {
+      return res.status(404).json({
+        success: false,
+        message: "Location not found",
+      });
+    }
+
+    // All active sites of this location
+    const locations = await LocationMain.find({
+      locationId: location._id,
+      status: 1,
+    })
+      .populate("locationId", "locationName slug")
+      .sort({ createdAt: -1 });
+
+    // Dynamic Filters
+    const filters = [
+      ...new Set(
+        locations
+          .map((item) => item.mediaType)
+          .filter((item) => item && item.trim() !== "")
+      ),
+    ];
+
+    return res.status(200).json({
+      success: true,
+      location,
+      filters,
+      data: locations,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+const getLocationDetail = async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    const location = await LocationMain.findOne({
+      slug,
+      status: 1,
+    }).populate("locationId", "locationName slug");
+
+    if (!location) {
+      return res.status(404).json({
+        success: false,
+        message: "Location not found",
+      });
+    }
+
+    // Same Location Master ke records (current ko chhodkar)
+    const relatedLocations = await LocationMain.find({
+      locationId: location.locationId._id, // Same Location Master
+      _id: { $ne: location._id },          // Current record exclude
+      status: 1,
+    })
+      .populate("locationId", "locationName slug")
+      .select(
+        "siteName slug image mediaType media siteCode locationId"
+      )
+      .sort({ createdAt: -1 })
+      .limit(6);
+
+    return res.json({
+      success: true,
+      data: location,
+      relatedLocations,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 module.exports = {
   getBlogs,
   getBlogDetails,
@@ -597,4 +683,6 @@ module.exports = {
   getCaseStudies,
   getCaseStudyDetail,
   getCaseStudyTestimonials,
+  getLocationBySlug,
+  getLocationDetail
 };

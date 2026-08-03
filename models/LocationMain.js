@@ -54,7 +54,9 @@ const locationMainSchema = new mongoose.Schema(
       default: "",
       trim: true,
     },
-
+ mediaType: {
+      type: String,
+    },
     siteCode: {
       type: String,
       default: "",
@@ -101,7 +103,7 @@ const locationMainSchema = new mongoose.Schema(
       default: "",
       trim: true,
     },
-
+   
     schemaCode: {
       type: String,
       default: "",

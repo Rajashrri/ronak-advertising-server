@@ -19,7 +19,9 @@ const {
         getCaseStudies,
   getCaseStudyDetail,
   getCaseStudyTestimonials,
-  subscribeNewsletter
+  subscribeNewsletter,
+  getLocationBySlug,
+  getLocationDetail
 } = require("../controllers/front-controller");
 
 const resumeUpload = require("../utils/resumeUpload");
@@ -46,6 +48,7 @@ router.get(
   "/case-study/:slug/testimonials",
   getCaseStudyTestimonials
 );
-
+router.get("/location-details/:slug", getLocationDetail);
 router.post("/subscribe", subscribeNewsletter);
+router.get("/location/:slug", getLocationBySlug);
 module.exports = router;

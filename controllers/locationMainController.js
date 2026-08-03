@@ -23,18 +23,19 @@ const addLocationMain = async (req, res) => {
       detail,
       media,
       type,
+       mediaType,
       slug,
       siteCode,
       latitude,
       longitude,
     } = req.body;
 
-    if (!locationId || !siteName) {
-      return res.status(400).json({
-        success: false,
-        message: "Location and Site Name are required.",
-      });
-    }
+   if (!locationId || !siteName || !mediaType) {
+  return res.status(400).json({
+    success: false,
+    message: "Location, Site Name and Media Type are required.",
+  });
+}
 
     if (!req.files?.image?.length) {
       return res.status(400).json({
@@ -72,6 +73,7 @@ const addLocationMain = async (req, res) => {
       detail,
       media,
       type,
+       mediaType,
       slug,
       siteCode,
       latitude,
@@ -186,7 +188,7 @@ const updateLocationMain = async (req, res) => {
       media,
       type,
       slug,
-
+ mediaType,
       siteCode,
       latitude,
       longitude,
@@ -229,7 +231,7 @@ const updateLocationMain = async (req, res) => {
     locationMain.siteCode = siteCode;
     locationMain.latitude = latitude;
     locationMain.longitude = longitude;
-
+locationMain.mediaType = mediaType;
     // ================= Featured Image =================
 
     if (req.files?.image?.length) {
