@@ -14,6 +14,8 @@ const Newsletter = require("../models/Newsletter");
 const fs = require("fs");
 const cloudinary = require("../utils/cloudinary");
 const LocationMain = require("../models/LocationMain");
+const LocationEnquiry = require("../models/LocationEnquiry");
+
 const uploadResume = async (filePath) => {
   const result = await cloudinary.uploader.upload(filePath, {
     folder: "resume",
@@ -27,6 +29,61 @@ const uploadResume = async (filePath) => {
   return result.secure_url;
 };
 
+const addLocationEnquiry = async (req, res) => {
+  try {
+    const { fullName, phone, email, message, siteName } = req.body;
+
+    if (!fullName || !phone || !email || !message || !siteName) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
+      });
+    }
+
+    if (!/^\d{10}$/.test(phone)) {
+      return res.status(400).json({
+        success: false,
+        message: "Phone number must be 10 digits",
+      });
+    }
+
+    const enquiry = await LocationEnquiry.create({
+      fullName,
+      phone,
+      email,
+      message,
+      siteName,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Enquiry submitted successfully",
+      data: enquiry,
+    });
+
+    sendMail(
+      email,
+      "rajashri@digihost.in",
+      "New Location Enquiry",
+      `
+      <h3>New Location Enquiry</h3>
+
+      <p><b>Site Name :</b> ${siteName}</p>
+      <p><b>Name :</b> ${fullName}</p>
+      <p><b>Email :</b> ${email}</p>
+      <p><b>Phone :</b> ${phone}</p>
+      <p><b>Message :</b> ${message}</p>
+      
+      <br>
+      <p>Regards,<br><b>Ronak Advertising</b></p>`,
+    ).catch(console.log);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 const addCareer = async (req, res) => {
   try {
     const {
@@ -118,7 +175,7 @@ const addCareer = async (req, res) => {
       </p>
 
       <br>
-      <p>Regards,<br><b>DIGIIHOST</b></p>
+      <p>Regards,<br><b>Ronak Advertising</b></p>
       `,
     ).catch((err) => {
       console.log("Career Mail Error:", err.message);
@@ -476,9 +533,9 @@ const getArticles = async (req, res) => {
 
 const getLocations = async (req, res) => {
   try {
-   const locations = await Location.find({ status: 1 }).sort({
-  createdAt: -1,
-});
+    const locations = await Location.find({ status: 1 }).sort({
+      createdAt: -1,
+    });
     return res.status(200).json({
       success: true,
       count: locations.length,
@@ -608,7 +665,7 @@ const getLocationBySlug = async (req, res) => {
       ...new Set(
         locations
           .map((item) => item.mediaType)
-          .filter((item) => item && item.trim() !== "")
+          .filter((item) => item && item.trim() !== ""),
       ),
     ];
 
@@ -644,13 +701,11 @@ const getLocationDetail = async (req, res) => {
     // Same Location Master ke records (current ko chhodkar)
     const relatedLocations = await LocationMain.find({
       locationId: location.locationId._id, // Same Location Master
-      _id: { $ne: location._id },          // Current record exclude
+      _id: { $ne: location._id }, // Current record exclude
       status: 1,
     })
       .populate("locationId", "locationName slug")
-      .select(
-        "siteName slug image mediaType media siteCode locationId"
-      )
+      .select("siteName slug image mediaType media siteCode locationId")
       .sort({ createdAt: -1 })
       .limit(6);
 
@@ -684,5 +739,6 @@ module.exports = {
   getCaseStudyDetail,
   getCaseStudyTestimonials,
   getLocationBySlug,
-  getLocationDetail
+  getLocationDetail,
+  addLocationEnquiry,
 };
