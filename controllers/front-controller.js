@@ -15,7 +15,7 @@ const fs = require("fs");
 const cloudinary = require("../utils/cloudinary");
 const LocationMain = require("../models/LocationMain");
 const LocationEnquiry = require("../models/LocationEnquiry");
-
+const PopupEnquiry = require("../models/PopupEnquiry");
 const uploadResume = async (filePath) => {
   const result = await cloudinary.uploader.upload(filePath, {
     folder: "resume",
@@ -28,7 +28,110 @@ const uploadResume = async (filePath) => {
 
   return result.secure_url;
 };
+const addPopupEnquiry = async (req, res) => {
+  try {
+    const {
+      fullName,
+      companyName,
+      email,
+      phone,
+      preferredLocation,
+      mediaType,
+      message,
+      pageUrl,
+    } = req.body;
 
+    if (
+      !fullName ||
+      !companyName ||
+      !email ||
+      !phone ||
+      !preferredLocation ||
+      !mediaType ||
+      !message
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
+      });
+    }
+
+    if (!/^\d{10}$/.test(phone)) {
+      return res.status(400).json({
+        success: false,
+        message: "Phone number must be 10 digits",
+      });
+    }
+
+    const emailRegex =
+      /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid email address",
+      });
+    }
+
+    const enquiry = await PopupEnquiry.create({
+      fullName,
+      companyName,
+      email,
+      phone,
+      preferredLocation,
+      mediaType,
+      message,
+      pageUrl,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Enquiry submitted successfully",
+      data: enquiry,
+    });
+
+    sendMail(
+      email,
+      "rajashri@digihost.in",
+      "New Popup Enquiry - Ronak Advertising",
+      `
+        <p><b>Dear Admin,</b></p>
+
+        <p>A new enquiry has been submitted from the website popup form.</p>
+
+        <h3>Enquiry Details</h3>
+
+        <p><b>Name:</b> ${fullName}</p>
+        <p><b>Company Name:</b> ${companyName}</p>
+        <p><b>Email:</b> ${email}</p>
+        <p><b>Phone:</b> ${phone}</p>
+        <p><b>Preferred Location:</b> ${preferredLocation}</p>
+        <p><b>Media Type:</b> ${mediaType}</p>
+        <p><b>Message:</b> ${message}</p>
+        <p><b>Page URL:</b> ${pageUrl || "-"}</p>
+
+        <br>
+
+        <p>
+          Regards,<br>
+          <b>Ronak Advertising</b>
+        </p>
+      `
+    ).catch((err) => {
+      console.error(
+        "Popup Enquiry Mail Error:",
+        err.message
+      );
+    });
+  } catch (error) {
+    console.error("Popup Enquiry Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
 const addLocationEnquiry = async (req, res) => {
   try {
     const { fullName, phone, email, message, siteName } = req.body;
@@ -741,4 +844,5 @@ module.exports = {
   getLocationBySlug,
   getLocationDetail,
   addLocationEnquiry,
+  addPopupEnquiry
 };

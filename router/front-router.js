@@ -22,7 +22,8 @@ const {
   subscribeNewsletter,
   getLocationBySlug,
   getLocationDetail,
-  addLocationEnquiry
+  addLocationEnquiry,
+  addPopupEnquiry
 } = require("../controllers/front-controller");
 
 const resumeUpload = require("../utils/resumeUpload");
@@ -52,7 +53,7 @@ router.get(
 router.get("/location-details/:slug", getLocationDetail);
 router.post("/subscribe", subscribeNewsletter);
 router.get("/location/:slug", getLocationBySlug);
-
+router.post("/popup-enquiry", addPopupEnquiry);
 router.post(
    "/location-enquiry",
    addLocationEnquiry
