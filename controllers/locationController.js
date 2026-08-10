@@ -13,7 +13,7 @@ const slugify = (text) =>
 
 const addLocation = async (req, res) => {
   try {
-    const { locationName } = req.body;
+    const { locationName, audience_reach, media_sites, ideal } = req.body;
 
     if (!locationName) {
       return res.status(400).json({
@@ -44,12 +44,15 @@ const addLocation = async (req, res) => {
 
     const image = await uploadToCloudinary(
       req.files.image[0].path,
-      "locations"
+      "locations",
     );
 
     const location = await Location.create({
       locationName,
+      audience_reach,
+      media_sites,
       slug,
+      ideal,
       image,
       status: 1,
     });
@@ -127,6 +130,9 @@ const updateLocation = async (req, res) => {
     // Update Location Name & Slug
     if (req.body.locationName) {
       location.locationName = req.body.locationName;
+      location.audience_reach = req.body.audience_reach;
+      location.media_sites = req.body.media_sites;
+      location.ideal = req.body.ideal;
 
       const slug = slugify(req.body.locationName);
 
@@ -153,7 +159,7 @@ const updateLocation = async (req, res) => {
 
       location.image = await uploadToCloudinary(
         req.files.image[0].path,
-        "locations"
+        "locations",
       );
     }
 

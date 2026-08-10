@@ -7,6 +7,18 @@ const locationSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    audience_reach: {
+      type: Number,
+      required: true,
+    },
+    ideal: {
+      type: String,
+      required: true,
+    },
+    media_sites: {
+      type: Number,
+      required: true,
+    },
 
     image: {
       type: String,
