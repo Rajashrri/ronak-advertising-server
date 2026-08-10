@@ -671,8 +671,8 @@ const getLocationBySlug = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      location,
-      filters,
+
+location: { _id: location._id, locationName: location.locationName, slug: location.slug, audience_reach: location.audience_reach, ideal: location.ideal, media_sites: location.media_sites, image: location.image, },      filters,
       data: locations,
     });
   } catch (error) {
