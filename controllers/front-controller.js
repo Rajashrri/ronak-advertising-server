@@ -16,6 +16,8 @@ const cloudinary = require("../utils/cloudinary");
 const LocationMain = require("../models/LocationMain");
 const LocationEnquiry = require("../models/LocationEnquiry");
 const PopupEnquiry = require("../models/PopupEnquiry");
+const LeadershipTeam = require("../models/LeadershipTeam");
+const CoreTeam = require("../models/CoreTeam");
 const uploadResume = async (filePath) => {
   const result = await cloudinary.uploader.upload(filePath, {
     folder: "resume",
@@ -824,6 +826,48 @@ const getLocationDetail = async (req, res) => {
     });
   }
 };
+
+const getTeamMembers = async (req, res) => {
+  try {
+    const teamMembers = await LeadershipTeam.find({
+      status: 1,
+    }).sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: teamMembers.length,
+      data: teamMembers,
+    });
+  } catch (error) {
+    console.log("Get Team Members Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+const getCoreTeam = async (req, res) => {
+  try {
+    const coreTeam = await CoreTeam.find({
+      status: 1,
+    }).sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: coreTeam.length,
+      data: coreTeam,
+    });
+  } catch (error) {
+    console.log("Get Core Team Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 module.exports = {
   getBlogs,
   getBlogDetails,
@@ -844,5 +888,7 @@ module.exports = {
   getLocationBySlug,
   getLocationDetail,
   addLocationEnquiry,
-  addPopupEnquiry
+  addPopupEnquiry,
+  getTeamMembers,
+  getCoreTeam
 };

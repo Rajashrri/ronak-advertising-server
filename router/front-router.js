@@ -23,7 +23,9 @@ const {
   getLocationBySlug,
   getLocationDetail,
   addLocationEnquiry,
-  addPopupEnquiry
+  addPopupEnquiry,
+  getTeamMembers,
+  getCoreTeam
 } = require("../controllers/front-controller");
 
 const resumeUpload = require("../utils/resumeUpload");
@@ -58,4 +60,6 @@ router.post(
    "/location-enquiry",
    addLocationEnquiry
 );
+router.get("/team-members", getTeamMembers);
+router.get("/core-team", getCoreTeam);
 module.exports = router;
