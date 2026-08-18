@@ -440,7 +440,7 @@ const getBlogs = async (req, res) => {
 
     const blogs = await Blog.find(filter)
       .populate("categoryId", "categoryName slug")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: 1 });
 
     return res.status(200).json({
       success: true,
@@ -476,7 +476,7 @@ const getBlogDetails = async (req, res) => {
       _id: { $ne: blog._id },
     })
       .populate("categoryId", "categoryName slug")
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: 1 })
       .limit(3);
 
     return res.status(200).json({
@@ -521,7 +521,7 @@ const getFeaturedBlogs = async (req, res) => {
       featured: 1,
     })
       .populate("categoryId", "categoryName slug")
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: 1 })
       .limit(3);
 
     return res.status(200).json({
@@ -542,7 +542,7 @@ const getTestimonials = async (req, res) => {
   try {
     const testimonials = await Testimonial.find({
       status: 1,
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: 1 });
 
     return res.status(200).json({
       success: true,
@@ -562,7 +562,7 @@ const getClients = async (req, res) => {
   try {
     const clients = await Clientele.find({ status: 1 })
       .select("clientName clientLogo")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: 1 });
 
     res.status(200).json({
       success: true,
@@ -583,7 +583,7 @@ const getFeaturedMedia = async (req, res) => {
       status: 1,
       featured: 1,
     })
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: 1 })
       .limit(2);
 
     res.status(200).json({
@@ -602,7 +602,7 @@ const getMediaCoverage = async (req, res) => {
   try {
     const media = await MediaCoverage.find({
       status: 1,
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: 1 });
 
     return res.status(200).json({
       success: true,
@@ -621,7 +621,7 @@ const getArticles = async (req, res) => {
   try {
     const articles = await Article.find({
       status: 1,
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: 1 });
 
     return res.status(200).json({
       success: true,
@@ -639,7 +639,7 @@ const getArticles = async (req, res) => {
 const getLocations = async (req, res) => {
   try {
     const locations = await Location.find({ status: 1 }).sort({
-      createdAt: -1,
+      createdAt: 1,
     });
     return res.status(200).json({
       success: true,
@@ -658,7 +658,7 @@ const getCaseStudies = async (req, res) => {
   try {
     const caseStudies = await CaseStudy.find({
       status: 1,
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: 1 });
 
     return res.status(200).json({
       success: true,
@@ -691,7 +691,7 @@ const getCaseStudyDetail = async (req, res) => {
       status: 1,
       _id: { $ne: caseStudy._id },
     })
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: 1 })
       .limit(2);
 
     return res.status(200).json({
@@ -726,7 +726,7 @@ const getCaseStudyTestimonials = async (req, res) => {
     const testimonials = await CaseStudyTestimonial.find({
       caseStudyId: caseStudy._id,
       status: 1,
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: 1 });
 
     return res.status(200).json({
       success: true,
@@ -763,7 +763,7 @@ const getLocationBySlug = async (req, res) => {
       status: 1,
     })
       .populate("locationId", "locationName slug")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: 1 });
 
     // Dynamic Filters
     const filters = [
@@ -811,7 +811,7 @@ const getLocationDetail = async (req, res) => {
     })
       .populate("locationId", "locationName slug")
       .select("siteName slug image mediaType media siteCode locationId")
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: 1 })
       .limit(6);
 
     return res.json({
@@ -831,7 +831,7 @@ const getTeamMembers = async (req, res) => {
   try {
     const teamMembers = await LeadershipTeam.find({
       status: 1,
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: 1 });
 
     return res.status(200).json({
       success: true,
@@ -852,7 +852,7 @@ const getCoreTeam = async (req, res) => {
   try {
     const coreTeam = await CoreTeam.find({
       status: 1,
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: 1 });
 
     return res.status(200).json({
       success: true,
