@@ -69,27 +69,53 @@ const addCoreTeam = async (req, res) => {
 // ================= LIST =================
 
 const listCoreTeam = async (req, res) => {
-
   try {
+    const {
+      page = 1,
+      limit = 10,
+      search = "",
+    } = req.query;
 
-    const data = await CoreTeam.find().sort({
-      createdAt: -1,
-    });
+    const pageNumber = parseInt(page);
+    const limitNumber = parseInt(limit);
+
+    const skip = (pageNumber - 1) * limitNumber;
+
+    // Search condition
+    const searchCondition = search
+      ? {
+          $or: [
+            { name: { $regex: search, $options: "i" } },
+            { designation: { $regex: search, $options: "i" } },
+          ],
+        }
+      : {};
+
+    // Total records
+    const total = await CoreTeam.countDocuments(searchCondition);
+
+    // Paginated data
+    const data = await CoreTeam.find(searchCondition)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNumber);
 
     res.status(200).json({
       success: true,
       data,
+      pagination: {
+        total,
+        page: pageNumber,
+        limit: limitNumber,
+        totalPages: Math.ceil(total / limitNumber),
+      },
     });
-
   } catch (error) {
-
     res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
-
 };
 
 

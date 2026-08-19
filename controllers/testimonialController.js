@@ -14,17 +14,15 @@ const addTestimonial = async (req, res) => {
       });
     }
 
-    if (!req.files || !req.files.image || !req.files.image.length) {
-      return res.status(400).json({
-        success: false,
-        message: "Image is required.",
-      });
-    }
+    let imageUrl = "";
 
-    const imageUrl = await uploadToCloudinary(
-      req.files.image[0].path,
-      "testimonial"
-    );
+    // Image uploaded hai tabhi Cloudinary par upload karo
+    if (req.files?.image?.[0]) {
+      imageUrl = await uploadToCloudinary(
+        req.files.image[0].path,
+        "testimonial"
+      );
+    }
 
     const testimonial = new Testimonial({
       name,
@@ -35,15 +33,15 @@ const addTestimonial = async (req, res) => {
 
     await testimonial.save();
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "Testimonial added successfully.",
       data: testimonial,
     });
   } catch (error) {
-    console.log(error);
+    console.log("Add Testimonial Error:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
@@ -54,16 +52,64 @@ const addTestimonial = async (req, res) => {
 
 const listTestimonials = async (req, res) => {
   try {
-    const testimonials = await Testimonial.find().sort({
-      createdAt: -1,
-    });
+    const {
+      search = "",
+      page = 1,
+      limit = 10,
+    } = req.query;
 
-    res.status(200).json({
+    const pageNumber = Math.max(Number(page), 1);
+    const limitNumber = Math.max(Number(limit), 1);
+    const skip = (pageNumber - 1) * limitNumber;
+
+    const searchQuery = search
+      ? {
+          $or: [
+            {
+              name: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              designation: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              briefIntro: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+          ],
+        }
+      : {};
+
+    const total = await Testimonial.countDocuments(searchQuery);
+
+    const testimonials = await Testimonial.find(searchQuery)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNumber);
+
+    const totalPages = Math.ceil(total / limitNumber);
+
+    return res.status(200).json({
       success: true,
       data: testimonials,
+      pagination: {
+        total,
+        page: pageNumber,
+        limit: limitNumber,
+        totalPages,
+      },
     });
   } catch (error) {
-    res.status(500).json({
+    console.log("List Testimonials Error:", error);
+
+    return res.status(500).json({
       success: false,
       message: error.message,
     });

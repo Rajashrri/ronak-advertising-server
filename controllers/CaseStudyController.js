@@ -44,16 +44,60 @@ const addCaseStudy = async (req, res) => {
     });
   }
 };
-
 const getCaseStudies = async (req, res) => {
   try {
-    const caseStudies = await CaseStudy.find().sort({
-      createdAt: -1,
-    });
+    const {
+      page = 1,
+      limit = 10,
+      search = "",
+    } = req.query;
+
+    const pageNumber = parseInt(page);
+    const limitNumber = parseInt(limit);
+
+    const skip = (pageNumber - 1) * limitNumber;
+
+    const searchCondition = search
+      ? {
+          $or: [
+            {
+              industry: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              name: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+          ],
+        }
+      : {};
+
+    const total = await CaseStudy.countDocuments(
+      searchCondition
+    );
+
+    const caseStudies = await CaseStudy.find(
+      searchCondition
+    )
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNumber);
 
     return res.status(200).json({
       success: true,
       data: caseStudies,
+      pagination: {
+        total,
+        page: pageNumber,
+        limit: limitNumber,
+        totalPages: Math.ceil(
+          total / limitNumber
+        ),
+      },
     });
   } catch (error) {
     return res.status(500).json({

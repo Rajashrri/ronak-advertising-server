@@ -47,19 +47,66 @@ const addCategory = async (req, res) => {
 // List
 const getCategories = async (req, res) => {
   try {
-    const categories = await BlogCategory.find().sort({ createdAt: -1 });
+    const {
+      search = "",
+      page = 1,
+      limit = 10,
+    } = req.query;
 
-    res.status(200).json({
+    const pageNumber = Math.max(Number(page), 1);
+    const limitNumber = Math.max(Number(limit), 1);
+    const skip = (pageNumber - 1) * limitNumber;
+
+    // Search condition
+    const searchQuery = search
+      ? {
+          $or: [
+            {
+              categoryName: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              slug: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+          ],
+        }
+      : {};
+
+    // Total records
+    const total = await BlogCategory.countDocuments(searchQuery);
+
+    // Paginated records
+    const categories = await BlogCategory.find(searchQuery)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNumber);
+
+    const totalPages = Math.ceil(total / limitNumber);
+
+    return res.status(200).json({
       success: true,
       data: categories,
+      pagination: {
+        total,
+        page: pageNumber,
+        limit: limitNumber,
+        totalPages,
+      },
     });
   } catch (error) {
-    res.status(500).json({
+    console.log("Get Categories Error:", error);
+
+    return res.status(500).json({
       success: false,
       message: "Server Error",
     });
   }
-};
+};;
 
 // Single Category
 const getCategoryById = async (req, res) => {

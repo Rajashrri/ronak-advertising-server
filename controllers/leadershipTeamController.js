@@ -75,29 +75,58 @@ const addLeadershipTeam = async (req, res) => {
 
 
 // ================= LIST =================
-
 const listLeadershipTeam = async (req, res) => {
-
   try {
+    const {
+      search = "",
+      page = 1,
+      limit = 10,
+    } = req.query;
 
-    const data = await LeadershipTeam.find().sort({
-      createdAt: -1,
-    });
+    const pageNumber = Math.max(Number(page), 1);
+    const limitNumber = Math.max(Number(limit), 1);
 
-    res.status(200).json({
+    const skip = (pageNumber - 1) * limitNumber;
+
+    // Search by name
+    const searchQuery = search
+      ? {
+          name: {
+            $regex: search,
+            $options: "i",
+          },
+        }
+      : {};
+
+    // Total records
+    const total = await LeadershipTeam.countDocuments(searchQuery);
+
+    // Paginated data
+    const data = await LeadershipTeam.find(searchQuery)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNumber);
+
+    const totalPages = Math.ceil(total / limitNumber);
+
+    return res.status(200).json({
       success: true,
       data,
+      pagination: {
+        total,
+        page: pageNumber,
+        limit: limitNumber,
+        totalPages,
+      },
     });
-
   } catch (error) {
+    console.log("Leadership List Error:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
-
 };
 
 

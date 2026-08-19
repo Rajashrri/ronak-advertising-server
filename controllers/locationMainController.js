@@ -23,19 +23,19 @@ const addLocationMain = async (req, res) => {
       detail,
       media,
       type,
-       mediaType,
+      mediaType,
       slug,
       siteCode,
       latitude,
       longitude,
     } = req.body;
 
-   if (!locationId || !siteName || !mediaType) {
-  return res.status(400).json({
-    success: false,
-    message: "Location, Site Name and Media Type are required.",
-  });
-}
+    if (!locationId || !siteName || !mediaType) {
+      return res.status(400).json({
+        success: false,
+        message: "Location, Site Name and Media Type are required.",
+      });
+    }
 
     if (!req.files?.image?.length) {
       return res.status(400).json({
@@ -73,7 +73,7 @@ const addLocationMain = async (req, res) => {
       detail,
       media,
       type,
-       mediaType,
+      mediaType,
       slug,
       siteCode,
       latitude,
@@ -102,13 +102,53 @@ const addLocationMain = async (req, res) => {
 
 const listLocationMain = async (req, res) => {
   try {
-    const data = await LocationMain.find()
-      .populate("locationId", "locationName")
-      .sort({ createdAt: -1 });
+    const { page = 1, limit = 10, search = "" } = req.query;
 
-    res.json({
+    const pageNumber = parseInt(page);
+    const limitNumber = parseInt(limit);
+
+    const skip = (pageNumber - 1) * limitNumber;
+
+    // Search condition
+    const searchCondition = search
+      ? {
+          $or: [
+            {
+              siteName: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+
+            {
+              siteCode: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+          ],
+        }
+      : {};
+
+    // Total records
+    const total = await LocationMain.countDocuments(searchCondition);
+
+    // Data
+    const data = await LocationMain.find(searchCondition)
+      .populate("locationId", "locationName")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNumber);
+
+    res.status(200).json({
       success: true,
       data,
+      pagination: {
+        total,
+        page: pageNumber,
+        limit: limitNumber,
+        totalPages: Math.ceil(total / limitNumber),
+      },
     });
   } catch (error) {
     res.status(500).json({
@@ -188,7 +228,7 @@ const updateLocationMain = async (req, res) => {
       media,
       type,
       slug,
- mediaType,
+      mediaType,
       siteCode,
       latitude,
       longitude,
@@ -231,7 +271,7 @@ const updateLocationMain = async (req, res) => {
     locationMain.siteCode = siteCode;
     locationMain.latitude = latitude;
     locationMain.longitude = longitude;
-locationMain.mediaType = mediaType;
+    locationMain.mediaType = mediaType;
     // ================= Featured Image =================
 
     if (req.files?.image?.length) {
@@ -395,7 +435,6 @@ const deleteGalleryImage = async (req, res) => {
   }
 };
 
-
 const updateLocationSeo = async (req, res) => {
   try {
     const {
@@ -430,14 +469,11 @@ const updateLocationSeo = async (req, res) => {
       message: "SEO updated successfully",
       data: location,
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 module.exports = {
@@ -449,5 +485,5 @@ module.exports = {
   changeStatus,
   getActiveLocations,
   deleteGalleryImage,
-  updateLocationSeo
+  updateLocationSeo,
 };

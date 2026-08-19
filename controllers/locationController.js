@@ -73,13 +73,46 @@ const addLocation = async (req, res) => {
 
 const listLocations = async (req, res) => {
   try {
-    const data = await Location.find().sort({
-      createdAt: -1,
-    });
+    const {
+      page = 1,
+      limit = 10,
+      search = "",
+    } = req.query;
 
-    res.json({
+    const pageNumber = parseInt(page);
+    const limitNumber = parseInt(limit);
+
+    const skip = (pageNumber - 1) * limitNumber;
+
+    const searchCondition = search
+      ? {
+          locationName: {
+            $regex: search,
+            $options: "i",
+          },
+        }
+      : {};
+
+    const total = await Location.countDocuments(
+      searchCondition
+    );
+
+    const data = await Location.find(searchCondition)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNumber);
+
+    res.status(200).json({
       success: true,
       data,
+      pagination: {
+        total,
+        page: pageNumber,
+        limit: limitNumber,
+        totalPages: Math.ceil(
+          total / limitNumber
+        ),
+      },
     });
   } catch (error) {
     res.status(500).json({
@@ -88,7 +121,6 @@ const listLocations = async (req, res) => {
     });
   }
 };
-
 // ================= DETAIL =================
 
 const locationDetail = async (req, res) => {

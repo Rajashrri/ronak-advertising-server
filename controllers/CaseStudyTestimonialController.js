@@ -42,18 +42,44 @@ const addCaseStudyTestimonial = async (req, res) => {
     });
   }
 };
-
 const getCaseStudyTestimonials = async (req, res) => {
   try {
-    const testimonials = await CaseStudyTestimonial.find({
-      caseStudyId: req.params.caseStudyId,
-    })
+    const { caseStudyId } = req.params;
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search?.trim() || "";
+
+    const skip = (page - 1) * limit;
+
+    const query = {
+      caseStudyId,
+    };
+
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { designation: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const total = await CaseStudyTestimonial.countDocuments(query);
+
+    const testimonials = await CaseStudyTestimonial.find(query)
       .populate("caseStudyId", "name")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
     return res.status(200).json({
       success: true,
       data: testimonials,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
     return res.status(500).json({

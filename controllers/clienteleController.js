@@ -42,14 +42,55 @@ const addClientele = async (req, res) => {
     });
   }
 };
-
 const listClientele = async (req, res) => {
-  const data = await Clientele.find().sort({ createdAt: -1 });
+  try {
+    const {
+      search = "",
+      page = 1,
+      limit = 10,
+    } = req.query;
 
-  res.json({
-    success: true,
-    data,
-  });
+    const pageNumber = Math.max(Number(page), 1);
+    const limitNumber = Math.max(Number(limit), 1);
+
+    const skip = (pageNumber - 1) * limitNumber;
+
+    const searchQuery = search
+      ? {
+          clientName: {
+            $regex: search,
+            $options: "i",
+          },
+        }
+      : {};
+
+    const total = await Clientele.countDocuments(searchQuery);
+
+    const data = await Clientele.find(searchQuery)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNumber);
+
+    const totalPages = Math.ceil(total / limitNumber);
+
+    return res.status(200).json({
+      success: true,
+      data,
+      pagination: {
+        total: total,
+        page: pageNumber,
+        limit: limitNumber,
+        totalPages: totalPages,
+      },
+    });
+  } catch (error) {
+    console.log("List Clientele Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };
 const clienteleDetail = async (req, res) => {
   const data = await Clientele.findById(req.params.id);

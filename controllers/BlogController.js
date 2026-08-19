@@ -19,14 +19,14 @@ const addBlog = async (req, res) => {
     if (req.files?.mainImage?.[0]) {
       mainImage = await uploadToCloudinary(
         req.files.mainImage[0].path,
-        "blog/main"
+        "blog/main",
       );
     }
 
     if (req.files?.featuredImage?.[0]) {
       featuredImage = await uploadToCloudinary(
         req.files.featuredImage[0].path,
-        "blog/featured"
+        "blog/featured",
       );
     }
 
@@ -89,25 +89,66 @@ const deleteBlog = async (req, res) => {
     });
   }
 };
-
 const getBlogs = async (req, res) => {
   try {
-    const blogs = await Blog.find()
+    const {
+      search = "",
+      page = 1,
+      limit = 10,
+    } = req.query;
+
+    const pageNumber = Math.max(Number(page), 1);
+    const limitNumber = Math.max(Number(limit), 1);
+    const skip = (pageNumber - 1) * limitNumber;
+
+    const searchQuery = search
+      ? {
+          $or: [
+            {
+              title: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              slug: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+          ],
+        }
+      : {};
+
+    const total = await Blog.countDocuments(searchQuery);
+
+    const blogs = await Blog.find(searchQuery)
       .populate("categoryId", "categoryName")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNumber);
+
+    const totalPages = Math.ceil(total / limitNumber);
 
     res.status(200).json({
       success: true,
       data: blogs,
+      pagination: {
+        total,
+        page: pageNumber,
+        limit: limitNumber,
+        totalPages,
+      },
     });
   } catch (error) {
+    console.log("Get Blogs Error:", error);
+
     res.status(500).json({
       success: false,
       message: error.message,
     });
   }
 };
-
 const getBlogById = async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id).populate("categoryId");
@@ -156,7 +197,7 @@ const updateBlog = async (req, res) => {
 
       updateData.mainImage = await uploadToCloudinary(
         req.files.mainImage[0].path,
-        "blog/main"
+        "blog/main",
       );
     }
 
@@ -168,7 +209,7 @@ const updateBlog = async (req, res) => {
 
       updateData.featuredImage = await uploadToCloudinary(
         req.files.featuredImage[0].path,
-        "blog/featured"
+        "blog/featured",
       );
     }
 
@@ -311,5 +352,5 @@ module.exports = {
   getSeoById,
   updateSeo,
   changeFeatured,
-  changeBlogStatus
+  changeBlogStatus,
 };

@@ -64,13 +64,52 @@ const addArticle = async (req, res) => {
 // ================= LIST =================
 const listArticles = async (req, res) => {
   try {
-    const data = await Article.find().sort({
-      createdAt: -1,
-    });
+    const {
+      page = 1,
+      limit = 10,
+      search = "",
+    } = req.query;
 
-    res.json({
+    const pageNumber = parseInt(page);
+    const limitNumber = parseInt(limit);
+
+    const skip = (pageNumber - 1) * limitNumber;
+
+    const searchCondition = search
+      ? {
+          $or: [
+            {
+              name: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              sourceName: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+          ],
+        }
+      : {};
+
+    const total = await Article.countDocuments(searchCondition);
+
+    const data = await Article.find(searchCondition)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNumber);
+
+    res.status(200).json({
       success: true,
       data,
+      pagination: {
+        total,
+        page: pageNumber,
+        limit: limitNumber,
+        totalPages: Math.ceil(total / limitNumber),
+      },
     });
   } catch (error) {
     res.status(500).json({
@@ -79,7 +118,6 @@ const listArticles = async (req, res) => {
     });
   }
 };
-
 // ================= DETAIL =================
 const articleDetail = async (req, res) => {
   try {
