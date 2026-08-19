@@ -16,7 +16,6 @@ const leadershipTeamSchema = new mongoose.Schema(
 
     experience: {
       type: String,
-      required: true,
       trim: true,
     },
 

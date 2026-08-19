@@ -19,8 +19,7 @@ const addLeadershipTeam = async (req, res) => {
 
     if (
       !name ||
-      !designation ||
-      !experience
+      !designation 
     ) {
       return res.status(400).json({
         success: false,
