@@ -4,7 +4,6 @@ const mediaCoverageSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: true,
       trim: true,
     },
 
@@ -15,12 +14,10 @@ const mediaCoverageSchema = new mongoose.Schema(
 
     publishedDate: {
       type: Date,
-      required: true,
     },
 
     sourceName: {
       type: String,
-      required: true,
       trim: true,
     },
 

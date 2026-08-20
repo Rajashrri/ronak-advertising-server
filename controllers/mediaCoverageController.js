@@ -10,12 +10,7 @@ const addMediaCoverage = async (req, res) => {
   try {
     const { name, publishedDate, sourceName } = req.body;
 
-    if (!name || !publishedDate || !sourceName) {
-      return res.status(400).json({
-        success: false,
-        message: "All fields are required.",
-      });
-    }
+   
 
     if (!req.files || !req.files.image || !req.files.image.length) {
       return res.status(400).json({
