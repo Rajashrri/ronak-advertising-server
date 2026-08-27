@@ -132,7 +132,17 @@ const addPopupEnquiry = async (req, res) => {
 };
 const addLocationEnquiry = async (req, res) => {
   try {
-    const { fullName, phone, email, message, siteName } = req.body;
+    const {
+      fullName,
+      phone,
+      email,
+      message,
+      siteName,
+      siteCode,
+      mediaType,
+      companyname,
+      location,
+    } = req.body;
 
     if (!fullName || !phone || !email || !message || !siteName) {
       return res.status(400).json({
@@ -154,6 +164,10 @@ const addLocationEnquiry = async (req, res) => {
       email,
       message,
       siteName,
+      siteCode,
+      companyname,
+      location,
+      mediaType,
     });
 
     res.status(200).json({
@@ -173,6 +187,12 @@ const addLocationEnquiry = async (req, res) => {
       <p><b>Name :</b> ${fullName}</p>
       <p><b>Email :</b> ${email}</p>
       <p><b>Phone :</b> ${phone}</p>
+       <p><b>Company Name:</b> ${companyname}</p>
+    <p><b>Media Type:</b> ${mediaType}</p>
+    <p><b>Location:</b> ${location}</p>
+    <p><b>Site Code:</b> ${siteCode}</p>
+
+     
       <p><b>Message :</b> ${message}</p>
       
       <br>

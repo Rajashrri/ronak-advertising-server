@@ -22,13 +22,23 @@ const locationEnquirySchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    siteCode: {
+      type: String,
+    },
+
+    companyname: {
+      type: String,
+    },
+    mediaType: {
+      type: String,
+    },
+    location: {
+      type: String,
+    },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-module.exports = mongoose.model(
-  "LocationEnquiry",
-  locationEnquirySchema
-);
+module.exports = mongoose.model("LocationEnquiry", locationEnquirySchema);
