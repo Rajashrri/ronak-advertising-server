@@ -65,8 +65,7 @@ const addPopupEnquiry = async (req, res) => {
       });
     }
 
-    const emailRegex =
-      /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+    const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
 
     if (!emailRegex.test(email)) {
       return res.status(400).json({
@@ -118,12 +117,9 @@ const addPopupEnquiry = async (req, res) => {
           Regards,<br>
           <b>Ronak Advertising</b>
         </p>
-      `
+      `,
     ).catch((err) => {
-      console.error(
-        "Popup Enquiry Mail Error:",
-        err.message
-      );
+      console.error("Popup Enquiry Mail Error:", err.message);
     });
   } catch (error) {
     console.error("Popup Enquiry Error:", error);
@@ -364,7 +360,15 @@ const subscribeNewsletter = async (req, res) => {
 };
 const addContact = async (req, res) => {
   try {
-    const { fullName, phone, email, message } = req.body;
+    const {
+      fullName,
+      phone,
+      email,
+      message,
+      companyname,
+      location,
+      mediaType,
+    } = req.body;
 
     if (!fullName || !phone || !email || !message) {
       return res.status(400).json({
@@ -376,6 +380,9 @@ const addContact = async (req, res) => {
     const contact = await Contact.create({
       fullName,
       phone,
+      companyname,
+      mediaType,
+      location,
       email,
       message,
     });
@@ -404,6 +411,10 @@ const addContact = async (req, res) => {
   <p><b>Name:</b> ${fullName}</p>
   <p><b>Email:</b> ${email}</p>
   <p><b>Phone:</b> ${phone}</p>
+    <p><b>Company Name:</b> ${companyname}</p>
+    <p><b>Media Type:</b> ${mediaType}</p>
+    <p><b>Location:</b> ${location}</p>
+
   <p><b>Message:</b> ${message}</p>
 
   <br>
@@ -777,7 +788,16 @@ const getLocationBySlug = async (req, res) => {
     return res.status(200).json({
       success: true,
 
-location: { _id: location._id, locationName: location.locationName, slug: location.slug, audience_reach: location.audience_reach, ideal: location.ideal, media_sites: location.media_sites, image: location.image, },      filters,
+      location: {
+        _id: location._id,
+        locationName: location.locationName,
+        slug: location.slug,
+        audience_reach: location.audience_reach,
+        ideal: location.ideal,
+        media_sites: location.media_sites,
+        image: location.image,
+      },
+      filters,
       data: locations,
     });
   } catch (error) {
@@ -872,10 +892,9 @@ const getCoreTeam = async (req, res) => {
 const getLocationFilters = async (req, res) => {
   try {
     // LocationMain me jo location use hue hain
-    const usedLocationIds = await LocationMain.distinct(
-      "locationId",
-      { status: 1 }
-    );
+    const usedLocationIds = await LocationMain.distinct("locationId", {
+      status: 1,
+    });
 
     // Sirf wahi locations lao
     const locations = await Location.find({
@@ -929,15 +948,39 @@ const getLocationFilters = async (req, res) => {
 
 const getAllLocationSites = async (req, res) => {
   try {
-    const locations = await LocationMain.find({
-      status: 1,
-    })
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    const locationId = req.query.locationId;
+    const mediaType = req.query.mediaType;
+
+    let filter = { status: 1 };
+
+    if (locationId && locationId !== "all") {
+      filter.locationId = locationId;
+    }
+
+    if (mediaType && mediaType !== "all") {
+      filter.mediaType = mediaType;
+    }
+
+    const total = await LocationMain.countDocuments(filter);
+
+    const locations = await LocationMain.find(filter)
       .populate("locationId", "locationName slug")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
 
     return res.status(200).json({
       success: true,
       data: locations,
+      pagination: {
+        total,
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        limit,
+      },
     });
   } catch (error) {
     return res.status(500).json({
@@ -970,5 +1013,5 @@ module.exports = {
   getTeamMembers,
   getCoreTeam,
   getLocationFilters,
-  getAllLocationSites
+  getAllLocationSites,
 };

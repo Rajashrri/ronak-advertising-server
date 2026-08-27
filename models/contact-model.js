@@ -16,7 +16,15 @@ const contactSchema = new mongoose.Schema(
     },
     message: {
       type: String,
-      required: true,
+    },
+    companyname: {
+      type: String,
+    },
+    mediaType: {
+      type: String,
+    },
+    location: {
+      type: String,
     },
   },
   {
