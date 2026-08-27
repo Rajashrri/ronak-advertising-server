@@ -11,7 +11,10 @@ const mediaCoverageSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-
+    imagePreview: {
+      type: String,
+      default: "",
+    },
     publishedDate: {
       type: Date,
     },
@@ -27,17 +30,14 @@ const mediaCoverageSchema = new mongoose.Schema(
       enum: [0, 1],
     },
     featured: {
-  type: Number,
-  default: 0,
-  enum: [0, 1],
-},
+      type: Number,
+      default: 0,
+      enum: [0, 1],
+    },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-module.exports = mongoose.model(
-  "MediaCoverage",
-  mediaCoverageSchema
-);
+module.exports = mongoose.model("MediaCoverage", mediaCoverageSchema);

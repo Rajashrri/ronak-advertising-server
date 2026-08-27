@@ -10,7 +10,7 @@ const {
   updateMediaCoverage,
   deleteMediaCoverage,
   changeMediaCoverageStatus,
-  changeMediaCoverageFeatured
+  changeMediaCoverageFeatured,
 } = require("../controllers/mediaCoverageController");
 
 // Add
@@ -21,21 +21,19 @@ router.post(
       name: "image",
       maxCount: 1,
     },
+    {
+      name: "imagePreview",
+      maxCount: 1,
+    },
   ]),
-  addMediaCoverage
+  addMediaCoverage,
 );
 
 // List
-router.get(
-  "/list-media-coverage",
-  listMediaCoverage
-);
+router.get("/list-media-coverage", listMediaCoverage);
 
 // Detail
-router.get(
-  "/media-coverage-detail/:id",
-  mediaCoverageDetail
-);
+router.get("/media-coverage-detail/:id", mediaCoverageDetail);
 
 // Update
 router.put(
@@ -45,23 +43,18 @@ router.put(
       name: "image",
       maxCount: 1,
     },
+    {
+      name: "imagePreview",
+      maxCount: 1,
+    },
   ]),
-  updateMediaCoverage
+  updateMediaCoverage,
 );
 
 // Delete
-router.delete(
-  "/delete-media-coverage/:id",
-  deleteMediaCoverage
-);
+router.delete("/delete-media-coverage/:id", deleteMediaCoverage);
 
 // Status Toggle
-router.patch(
-  "/change-status/:id",
-  changeMediaCoverageStatus
-);
-router.patch(
-  "/change-featured/:id",
-  changeMediaCoverageFeatured
-);
+router.patch("/change-status/:id", changeMediaCoverageStatus);
+router.patch("/change-featured/:id", changeMediaCoverageFeatured);
 module.exports = router;

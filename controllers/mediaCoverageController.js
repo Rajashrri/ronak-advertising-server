@@ -10,8 +10,6 @@ const addMediaCoverage = async (req, res) => {
   try {
     const { name, publishedDate, sourceName } = req.body;
 
-   
-
     if (!req.files || !req.files.image || !req.files.image.length) {
       return res.status(400).json({
         success: false,
@@ -23,12 +21,21 @@ const addMediaCoverage = async (req, res) => {
       req.files.image[0].path,
       "media-coverage",
     );
+    // Image Preview
+    let imagePreview = "";
 
+    if (req.files.imagePreview && req.files.imagePreview.length) {
+      imagePreview = await uploadToCloudinary(
+        req.files.imagePreview[0].path,
+        "media-coverage-preview",
+      );
+    }
     const media = await MediaCoverage.create({
       name,
       publishedDate,
       sourceName,
       image,
+      imagePreview,
       status: 1,
     });
 
@@ -51,11 +58,7 @@ const addMediaCoverage = async (req, res) => {
 
 const listMediaCoverage = async (req, res) => {
   try {
-    const {
-      page = 1,
-      limit = 10,
-      search = "",
-    } = req.query;
+    const { page = 1, limit = 10, search = "" } = req.query;
 
     const pageNumber = parseInt(page);
     const limitNumber = parseInt(limit);
@@ -153,14 +156,43 @@ const updateMediaCoverage = async (req, res) => {
     media.publishedDate = publishedDate;
     media.sourceName = sourceName;
 
-    if (req.files && req.files.image && req.files.image.length) {
+    // =========================
+    // Main Image
+    // =========================
+    if (
+      req.files &&
+      req.files.image &&
+      req.files.image.length
+    ) {
+      // Delete old image
       if (media.image) {
         await deleteFromCloudinary(media.image);
       }
 
+      // Upload new image
       media.image = await uploadToCloudinary(
         req.files.image[0].path,
-        "media-coverage",
+        "media-coverage"
+      );
+    }
+
+    // =========================
+    // Image Preview
+    // =========================
+    if (
+      req.files &&
+      req.files.imagePreview &&
+      req.files.imagePreview.length
+    ) {
+      // Delete old preview image
+      if (media.imagePreview) {
+        await deleteFromCloudinary(media.imagePreview);
+      }
+
+      // Upload new preview image
+      media.imagePreview = await uploadToCloudinary(
+        req.files.imagePreview[0].path,
+        "media-coverage-preview"
       );
     }
 
@@ -178,7 +210,6 @@ const updateMediaCoverage = async (req, res) => {
     });
   }
 };
-
 // =======================
 // Delete
 // =======================
@@ -277,5 +308,5 @@ module.exports = {
   updateMediaCoverage,
   deleteMediaCoverage,
   changeMediaCoverageStatus,
-  changeMediaCoverageFeatured
+  changeMediaCoverageFeatured,
 };
