@@ -868,6 +868,84 @@ const getCoreTeam = async (req, res) => {
     });
   }
 };
+
+const getLocationFilters = async (req, res) => {
+  try {
+    // LocationMain me jo location use hue hain
+    const usedLocationIds = await LocationMain.distinct(
+      "locationId",
+      { status: 1 }
+    );
+
+    // Sirf wahi locations lao
+    const locations = await Location.find({
+      _id: { $in: usedLocationIds },
+      status: 1,
+    })
+      .select("_id locationName slug")
+      .sort({ locationName: 1 });
+
+    const mediaTypes = await LocationMain.distinct("mediaType", {
+      status: 1,
+      mediaType: { $nin: ["", null] },
+    });
+
+    return res.status(200).json({
+      success: true,
+      locations,
+      mediaTypes,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// const getLocationFilters = async (req, res) => {
+//   try {
+//     const locations = await Location.find({ status: 1 })
+//       .select("_id locationName slug")
+//       .sort({ locationName: 1 });
+
+//     const mediaTypes = await LocationMain.distinct("mediaType", {
+//       status: 1,
+//       mediaType: { $ne: "" },
+//     });
+
+//     return res.status(200).json({
+//       success: true,
+//       locations,
+//       mediaTypes,
+//     });
+//   } catch (error) {
+//     return res.status(500).json({
+//       success: false,
+//       message: error.message,
+//     });
+//   }
+// };
+
+const getAllLocationSites = async (req, res) => {
+  try {
+    const locations = await LocationMain.find({
+      status: 1,
+    })
+      .populate("locationId", "locationName slug")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      data: locations,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 module.exports = {
   getBlogs,
   getBlogDetails,
@@ -890,5 +968,7 @@ module.exports = {
   addLocationEnquiry,
   addPopupEnquiry,
   getTeamMembers,
-  getCoreTeam
+  getCoreTeam,
+  getLocationFilters,
+  getAllLocationSites
 };
