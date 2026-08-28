@@ -91,36 +91,56 @@ const addPopupEnquiry = async (req, res) => {
       data: enquiry,
     });
 
-    sendMail(
-      email,
-      "rajashri@digihost.in",
-      "New Popup Enquiry - Ronak Advertising",
-      `
-        <p><b>Dear Admin,</b></p>
+   sendMail(
+  email,
+  "rajashri@digihost.in",
+   "New Location Enquiry",
+  `
+  <p><strong>Dear Admin,</strong></p>
 
-        <p>A new enquiry has been submitted from the website popup form.</p>
+  <p>
+    A new enquiry has been submitted through the Ronak Advertising website.
+  </p>
 
-        <h3>Enquiry Details</h3>
+  <p><strong>Please find the enquiry details below:</strong></p>
 
-        <p><b>Name:</b> ${fullName}</p>
-        <p><b>Company Name:</b> ${companyName}</p>
-        <p><b>Email:</b> ${email}</p>
-        <p><b>Phone:</b> ${phone}</p>
-        <p><b>Preferred Location:</b> ${preferredLocation}</p>
-        <p><b>Media Type:</b> ${mediaType}</p>
-        <p><b>Message:</b> ${message}</p>
-        <p><b>Page URL:</b> ${pageUrl || "-"}</p>
+  <p><strong>Full Name:</strong> ${fullName}</p>
+  <p><strong>Email Address:</strong> ${email}</p>
+  <p><strong>Contact Number:</strong> ${phone}</p>
+  <p><strong>Company Name:</strong> ${companyName || "N/A"}</p>
+  <p><strong>Preferred Location:</strong> ${preferredLocation || "N/A"}</p>
+  <p><strong>Media Type:</strong> ${mediaType || "N/A"}</p>
+  <p><strong>Message:</strong> ${message}</p>
 
-        <br>
 
-        <p>
-          Regards,<br>
-          <b>Ronak Advertising</b>
-        </p>
-      `,
-    ).catch((err) => {
-      console.error("Popup Enquiry Mail Error:", err.message);
-    });
+  <p><strong>Submission Details:</strong></p>
+
+  <p><strong>Page URL:</strong> ${pageUrl || "N/A"}</p>
+
+  <p><strong>IP Address:</strong> ${
+    req.headers["x-forwarded-for"] || req.socket.remoteAddress || "N/A"
+  }</p>
+
+  <p><strong>Submission Date & Time:</strong> ${new Date().toLocaleString(
+    "en-IN",
+    { timeZone: "Asia/Kolkata" }
+  )}</p>
+
+
+  <p>
+    Please review the enquiry and get in touch with the customer for further assistance.
+  </p>
+
+  <br>
+
+  <p>
+    <strong>Regards,</strong><br>
+    Ronak Advertising
+  </p>
+  `
+).catch((err) => {
+  console.error("Popup Enquiry Mail Error:", err.message);
+});
   } catch (error) {
     console.error("Popup Enquiry Error:", error);
 
@@ -175,29 +195,54 @@ const addLocationEnquiry = async (req, res) => {
       message: "Enquiry submitted successfully",
       data: enquiry,
     });
+sendMail(
+  email,
+  "rajashri@digihost.in",
+  "New Location Enquiry",
+  `
+  <p><strong>Dear Admin,</strong></p>
 
-    sendMail(
-      email,
-      "rajashri@digihost.in",
-      "New Location Enquiry",
-      `
-      <h3>New Location Enquiry</h3>
+  <p>
+    A new enquiry has been submitted through the Ronak Advertising website.
+  </p>
 
-      <p><b>Site Name :</b> ${siteName}</p>
-      <p><b>Name :</b> ${fullName}</p>
-      <p><b>Email :</b> ${email}</p>
-      <p><b>Phone :</b> ${phone}</p>
-       <p><b>Company Name:</b> ${companyname}</p>
-    <p><b>Media Type:</b> ${mediaType}</p>
-    <p><b>Location:</b> ${location}</p>
-    <p><b>Site Code:</b> ${siteCode}</p>
+  <p><strong>Please find the enquiry details below:</strong></p>
 
-     
-      <p><b>Message :</b> ${message}</p>
-      
-      <br>
-      <p>Regards,<br><b>Ronak Advertising</b></p>`,
-    ).catch(console.log);
+  <p><strong>Full Name:</strong> ${fullName}</p>
+  <p><strong>Email Address:</strong> ${email}</p>
+  <p><strong>Contact Number:</strong> ${phone}</p>
+
+  <p><strong>Site Name:</strong> ${siteName}</p>
+  <p><strong>Site Code:</strong> ${siteCode || "N/A"}</p>
+  <p><strong>Media Type:</strong> ${mediaType || "N/A"}</p>
+  <p><strong>Company Name:</strong> ${companyname || "N/A"}</p>
+  <p><strong>Location:</strong> ${location || "N/A"}</p>
+
+  <p><strong>Message:</strong> ${message}</p>
+
+  <p><strong>Submission Details:</strong></p>
+
+  <p><strong>Page URL:</strong> ${req.headers.referer || "N/A"}</p>
+
+  <p><strong>IP Address:</strong> ${
+    req.headers["x-forwarded-for"] || req.socket.remoteAddress || "N/A"
+  }</p>
+
+  <p><strong>Submission Date & Time:</strong> ${new Date().toLocaleString(
+    "en-IN",
+    { timeZone: "Asia/Kolkata" }
+  )}</p>
+  <p>
+    Please review the enquiry and get in touch with the customer for further assistance.
+  </p>
+
+
+  <p>
+    <strong>Regards,</strong><br>
+    Ronak Advertising
+  </p>
+  `
+).catch(console.log);
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -415,35 +460,50 @@ const addContact = async (req, res) => {
     });
 
     // Send mail in background
-    sendMail(
-      email,
-      "rajashri@digihost.in",
-      "New Contact Inquiry",
-      `
-  <p><b>Dear Admin,</b></p>
+sendMail(
+  email,
+  "rajashri@digihost.in",
+  "New Contact Inquiry",
+  `
+  <p><strong>Dear Admin,</strong></p>
 
-  <p>A new contact enquiry has been submitted through the website.</p>
+  <p>
+    A new contact request has been submitted through the Ronak Advertising website.
+  </p>
 
-  <p>You have received a new enquiry from <b>${fullName}</b>.</p>
+  <p><strong>Please find the contact details below:</strong></p>
 
-  <h3>Details:</h3>
+  <p><strong>Full Name:</strong> ${fullName}</p>
+  <p><strong>Email Address:</strong> ${email}</p>
+  <p><strong>Contact Number:</strong> ${phone}</p>
+  <p><strong>Company Name:</strong> ${companyname || "N/A"}</p>
+  <p><strong>Media Type:</strong> ${mediaType || "N/A"}</p>
+  <p><strong>Location:</strong> ${location || "N/A"}</p>
+  <p><strong>Message:</strong> ${message}</p>
 
-  <p><b>Name:</b> ${fullName}</p>
-  <p><b>Email:</b> ${email}</p>
-  <p><b>Phone:</b> ${phone}</p>
-    <p><b>Company Name:</b> ${companyname}</p>
-    <p><b>Media Type:</b> ${mediaType}</p>
-    <p><b>Location:</b> ${location}</p>
+  <p><strong>Submission Details:</strong></p>
 
-  <p><b>Message:</b> ${message}</p>
+  <p><strong>Page URL:</strong> ${req.headers.referer || "N/A"}</p>
+  <p><strong>IP Address:</strong> ${
+    req.headers["x-forwarded-for"] || req.socket.remoteAddress || "N/A"
+  }</p>
+  <p><strong>Submission Date & Time:</strong> ${new Date().toLocaleString(
+    "en-IN",
+    { timeZone: "Asia/Kolkata" }
+  )}</p>
 
-  <br>
+  <p>
+    Please review the request and connect with the customer at the earliest.
+  </p>
 
-  <p>Regards,<br><b>Ronak Advertising</b></p>
-  `,
-    ).catch((err) => {
-      console.error("Background Mail Error:", err);
-    });
+  <p>
+    <strong>Regards,</strong><br>
+    Ronak Advertising
+  </p>
+  `
+).catch((err) => {
+  console.error("Background Mail Error:", err);
+});
   } catch (error) {
     console.log(error);
 
