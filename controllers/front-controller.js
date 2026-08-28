@@ -615,7 +615,7 @@ const getFeaturedMedia = async (req, res) => {
       featured: 1,
     })
       .sort({ createdAt: 1 })
-      .limit(2);
+      .limit(3);
 
     res.status(200).json({
       success: true,

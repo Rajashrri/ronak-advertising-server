@@ -285,17 +285,34 @@ const changeMediaCoverageFeatured = async (req, res) => {
       });
     }
 
-    media.featured = media.featured === 1 ? 0 : 1;
+    // Agar currently non-featured hai aur featured karna hai
+    if (media.featured === 0) {
+      const featuredCount = await MediaCoverage.countDocuments({
+        featured: 1,
+      });
+
+      if (featuredCount >= 3) {
+        return res.status(400).json({
+          success: false,
+          message: "Only 3 media coverages can be featured.",
+        });
+      }
+
+      media.featured = 1;
+    } else {
+      // Unfeature karna ho to allow karo
+      media.featured = 0;
+    }
 
     await media.save();
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Featured updated successfully.",
       data: media,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
