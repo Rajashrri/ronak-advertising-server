@@ -8,7 +8,7 @@ const deleteFromCloudinary = require("../utils/cloudinaryDelete");
 
 const addMediaCoverage = async (req, res) => {
   try {
-    const { name, publishedDate, sourceName } = req.body;
+    const { name, publishedDate, sourceName,briefIntro } = req.body;
 
     if (!req.files || !req.files.image || !req.files.image.length) {
       return res.status(400).json({
@@ -36,6 +36,7 @@ const addMediaCoverage = async (req, res) => {
       sourceName,
       image,
       imagePreview,
+      briefIntro,
       status: 1,
     });
 
@@ -141,7 +142,7 @@ const mediaCoverageDetail = async (req, res) => {
 
 const updateMediaCoverage = async (req, res) => {
   try {
-    const { name, publishedDate, sourceName } = req.body;
+    const { name, publishedDate, sourceName,briefIntro } = req.body;
 
     const media = await MediaCoverage.findById(req.params.id);
 
@@ -155,6 +156,7 @@ const updateMediaCoverage = async (req, res) => {
     media.name = name;
     media.publishedDate = publishedDate;
     media.sourceName = sourceName;
+    media.briefIntro = briefIntro;
 
     // =========================
     // Main Image

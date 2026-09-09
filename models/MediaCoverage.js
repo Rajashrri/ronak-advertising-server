@@ -19,6 +19,11 @@ const mediaCoverageSchema = new mongoose.Schema(
       type: Date,
     },
 
+    
+    briefIntro: {
+      type: String,
+      trim: true,
+    },
     sourceName: {
       type: String,
       trim: true,
