@@ -26,6 +26,9 @@ const locationRouter = require("./router/location-router");
 const locationMainRouter = require("./router/locationMain-router");
 const caseStudyRoutes = require("./router/caseStudyRoutes");
 
+const locationBulkUploadRoutes = require("./router/locationBulkUploadRoutes");
+
+
 const caseStudyTestimonialRoutes = require("./router/caseStudyTestimonialRoutes");
 
 const mediaCoverageRouter = require("./router/mediaCoverage-router");
@@ -104,6 +107,10 @@ app.use("/api/core-team", coreTeamRouter);
 app.use("/api/case-study", caseStudyRoutes);
 
 app.use("/api/media-coverage", mediaCoverageRouter);
+
+app.use("/api/location-bulk-upload", locationBulkUploadRoutes);
+
+
 
 app.use("/api/ckeditor", ckeditorRoutes);
 app.get("/health", (req, res) => {
