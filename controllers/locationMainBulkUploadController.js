@@ -161,46 +161,116 @@ const bulkUploadLocationMain = async (req, res) => {
     // CREATE HISTORY
     // ======================================
 
-    history = await LocationMainBulkUpload.create({
-      fileName: excelFile.originalname,
-      excelFile: excelFile.originalname,
-      mainZipFile: mainZipFile.originalname,
-      galleryZipFile: galleryZipFile ? galleryZipFile.originalname : "",
-      status: "Processing",
-      totalRecords: 0,
-      successRecords: 0,
-      failedRecords: 0,
-      errorLog: [],
-    });
+ 
 
     // ======================================
     // READ EXCEL
     // ======================================
+// ======================================
+// READ EXCEL
+// ======================================
 
-    const workbook = XLSX.readFile(excelFile.path);
+const workbook = XLSX.readFile(excelFile.path, {
+  cellDates: true,
+});
 
-    if (!workbook.SheetNames.length) {
-      throw new Error("Excel sheet not found");
-    }
+if (!workbook.SheetNames.length) {
+  return res.status(400).json({
+    success: false,
+    message: "Excel is empty",
+  });
+}
 
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+const sheetName = workbook.SheetNames[0];
+const sheet = workbook.Sheets[sheetName];
 
-    const rows = XLSX.utils.sheet_to_json(sheet, {
-      defval: "",
-    });
+console.log("======================================");
+console.log("EXCEL FILE:", excelFile.originalname);
+console.log("SHEET NAME:", sheetName);
+console.log("SHEET REF:", sheet["!ref"]);
+console.log("======================================");
 
-    if (!rows.length) {
-      history.status = "Failed";
-      history.totalRecords = 0;
+// ======================================
+// READ RAW ROWS
+// ======================================
 
-      await history.save();
+const rawRows = XLSX.utils.sheet_to_json(sheet, {
+  header: 1,
+  defval: "",
+  blankrows: false,
+});
 
-      return res.status(400).json({
-        success: false,
-        message: "Excel file is empty",
-      });
-    }
+console.log("RAW EXCEL ROWS:", rawRows);
 
+// ======================================
+// COMPLETELY EMPTY EXCEL
+// ======================================
+
+if (!rawRows || rawRows.length === 0) {
+  return res.status(400).json({
+    success: false,
+    message: "Excel is empty",
+  });
+}
+
+// ======================================
+// CHECK HEADER ROW
+// ======================================
+
+const headers = Array.isArray(rawRows[0])
+  ? rawRows[0].map((header) => String(header || "").trim())
+  : [];
+
+console.log("EXCEL HEADERS:", headers);
+
+// Header row completely blank
+if (!headers.length || headers.every((header) => !header)) {
+  return res.status(400).json({
+    success: false,
+    message: "Excel is empty",
+  });
+}
+
+// ======================================
+// READ DATA ROWS
+// ======================================
+
+const rows = XLSX.utils.sheet_to_json(sheet, {
+  defval: "",
+  blankrows: false,
+});
+
+console.log("PARSED ROWS:", rows);
+console.log("PARSED ROW COUNT:", rows.length);
+
+// ======================================
+// HEADER EXISTS BUT NO DATA
+// ======================================
+
+if (!rows || rows.length === 0) {
+  return res.status(400).json({
+    success: false,
+    message: "Excel contains headers but no data rows",
+  });
+}
+// ======================================
+// CREATE HISTORY
+// ONLY AFTER EXCEL VALIDATION
+// ======================================
+
+history = await LocationMainBulkUpload.create({
+  fileName: excelFile.originalname,
+  excelFile: excelFile.originalname,
+  mainZipFile: mainZipFile.originalname,
+  galleryZipFile: galleryZipFile
+    ? galleryZipFile.originalname
+    : "",
+  status: "Processing",
+  totalRecords: rows.length,
+  successRecords: 0,
+  failedRecords: 0,
+  errorLog: [],
+});
     // ======================================
     // EXTRACT ZIP
     // ======================================
