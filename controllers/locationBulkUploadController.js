@@ -6,18 +6,29 @@ const path = require("path");
 const Location = require("../models/Location");
 const LocationBulkUpload = require("../models/LocationBulkUpload");
 
-const {
-  uploadToCloudinary,
-} = require("../utils/upload");
+const { uploadToCloudinary } = require("../utils/upload");
 
+// ==========================================
+// CONTROLLER LOADED
+// ==========================================
 
-/* --------------------------------
-   Slug Generate
--------------------------------- */
+console.log(
+  "=============================================="
+);
+console.log(
+  "✅ LOCATION BULK UPLOAD CONTROLLER LOADED"
+);
+console.log("__filename:", __filename);
+console.log(
+  "=============================================="
+);
+
+// ==========================================
+// SLUGIFY
+// ==========================================
 
 const slugify = (text) => {
-  return text
-    .toString()
+  return String(text || "")
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9\s-]/g, "")
@@ -25,19 +36,14 @@ const slugify = (text) => {
     .replace(/-+/g, "-");
 };
 
+// ==========================================
+// NORMALIZE FILE NAME
+// ==========================================
 
-/* --------------------------------
-   Find Image Recursively
--------------------------------- */
-
-/* --------------------------------
-   Normalize File Name
--------------------------------- */
-/* --------------------------------
-   Normalize File Name
--------------------------------- */
 const normalizeFileName = (name) => {
-  if (!name) return "";
+  if (!name) {
+    return "";
+  }
 
   let fileName = path
     .basename(
@@ -50,7 +56,7 @@ const normalizeFileName = (name) => {
     .replace(/^["']|["']$/g, "")
     .toLowerCase();
 
-  // Remove duplicate image extension
+  // Remove duplicate extension
   const imageExtensions = [
     ".webp",
     ".jpg",
@@ -61,10 +67,7 @@ const normalizeFileName = (name) => {
 
   for (const ext of imageExtensions) {
     if (fileName.endsWith(ext + ext)) {
-      fileName = fileName.slice(
-        0,
-        -ext.length
-      );
+      fileName = fileName.slice(0, -ext.length);
       break;
     }
   }
@@ -72,13 +75,18 @@ const normalizeFileName = (name) => {
   return fileName;
 };
 
-/* --------------------------------
-   Find Image Recursively
--------------------------------- */
+// ==========================================
+// FIND IMAGE RECURSIVELY
+// ==========================================
+
 const findImageInFolder = (folder, imageName) => {
   const targetName = normalizeFileName(imageName);
 
   if (!targetName) {
+    return null;
+  }
+
+  if (!fs.existsSync(folder)) {
     return null;
   }
 
@@ -119,7 +127,7 @@ const findImageInFolder = (folder, imageName) => {
         normalizedFileName === targetName
       ) {
         console.log(
-          "IMAGE FOUND:",
+          "✅ IMAGE FOUND:",
           fullPath
         );
 
@@ -132,529 +140,1027 @@ const findImageInFolder = (folder, imageName) => {
 
   return scan(folder);
 };
-/* --------------------------------
-   Bulk Upload Locations
--------------------------------- */
 
-const bulkUploadLocations =
-  async (req, res) => {
+// ==========================================
+// GET CELL VALUE SAFELY
+// ==========================================
 
-    let extractFolder = null;
-    let history = null;
+const getCellValue = (row, key) => {
+  if (!row || row[key] === undefined || row[key] === null) {
+    return "";
+  }
+
+  return String(row[key]).trim();
+};
+
+// ==========================================
+// BULK UPLOAD LOCATIONS
+// ==========================================
+
+const bulkUploadLocations = async (req, res) => {
+  let extractFolder = null;
+  let history = null;
+
+  const requestId =
+    `${Date.now()}-` +
+    Math.random()
+      .toString(36)
+      .substring(2, 8);
+
+  console.log("");
+  console.log(
+    "=================================================="
+  );
+  console.log(
+    `🔥 BULK UPLOAD REQUEST STARTED: ${requestId}`
+  );
+  console.log(
+    "=================================================="
+  );
+
+  try {
+    // ==========================================
+    // REQUEST LOG
+    // ==========================================
+
+    console.log(
+      "METHOD:",
+      req.method
+    );
+
+    console.log(
+      "URL:",
+      req.originalUrl
+    );
+
+    console.log(
+      "FILES:",
+      Object.keys(req.files || {})
+    );
+
+    console.log(
+      "REQ.FILES:",
+      req.files
+        ? Object.keys(req.files)
+        : "NO FILES"
+    );
+
+    // ==========================================
+    // CHECK EXCEL
+    // ==========================================
+
+    if (
+      !req.files ||
+      !req.files.excel ||
+      !req.files.excel.length
+    ) {
+      console.log(
+        "❌ EXCEL FILE NOT FOUND"
+      );
+
+      return res.status(400).json({
+        success: false,
+        message: "Excel file required",
+      });
+    }
+
+    // ==========================================
+    // CHECK ZIP
+    // ==========================================
+
+    if (
+      !req.files.zip ||
+      !req.files.zip.length
+    ) {
+      console.log(
+        "❌ ZIP FILE NOT FOUND"
+      );
+
+      return res.status(400).json({
+        success: false,
+        message: "ZIP file required",
+      });
+    }
+
+    const excelFile =
+      req.files.excel[0];
+
+    const zipFile =
+      req.files.zip[0];
+
+    console.log(
+      "EXCEL:",
+      excelFile.originalname
+    );
+
+    console.log(
+      "EXCEL PATH:",
+      excelFile.path
+    );
+
+    console.log(
+      "ZIP:",
+      zipFile.originalname
+    );
+
+    console.log(
+      "ZIP PATH:",
+      zipFile.path
+    );
+
+    // ==========================================
+    // FILE EXTENSION VALIDATION
+    // ==========================================
+
+    const excelExtension = path
+      .extname(excelFile.originalname)
+      .toLowerCase();
+
+    const zipExtension = path
+      .extname(zipFile.originalname)
+      .toLowerCase();
+
+    console.log(
+      "EXCEL EXTENSION:",
+      excelExtension
+    );
+
+    console.log(
+      "ZIP EXTENSION:",
+      zipExtension
+    );
+
+    if (
+      excelExtension !== ".xlsx" &&
+      excelExtension !== ".xls"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Only .xlsx or .xls Excel files are allowed",
+      });
+    }
+
+    if (zipExtension !== ".zip") {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Only .zip files are allowed",
+      });
+    }
+
+    // ==========================================
+    // CHECK FILE EXISTS
+    // ==========================================
+
+    if (
+      !fs.existsSync(excelFile.path)
+    ) {
+      console.log(
+        "❌ EXCEL FILE DOES NOT EXIST:",
+        excelFile.path
+      );
+
+      return res.status(400).json({
+        success: false,
+        message:
+          "Uploaded Excel file could not be found",
+      });
+    }
+
+    if (
+      !fs.existsSync(zipFile.path)
+    ) {
+      console.log(
+        "❌ ZIP FILE DOES NOT EXIST:",
+        zipFile.path
+      );
+
+      return res.status(400).json({
+        success: false,
+        message:
+          "Uploaded ZIP file could not be found",
+      });
+    }
+
+    // ==========================================
+    // READ EXCEL
+    // IMPORTANT:
+    // HISTORY IS NOT CREATED YET
+    // ==========================================
+
+    console.log(
+      "📖 READING EXCEL..."
+    );
+
+    let workbook;
 
     try {
+      workbook = XLSX.readFile(
+        excelFile.path,
+        {
+          cellDates: true,
+        }
+      );
+    } catch (excelError) {
+      console.error(
+        "❌ EXCEL READ ERROR:",
+        excelError
+      );
 
-      /* -------------------------
-         Check Excel
-      ------------------------- */
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid or corrupted Excel file",
+      });
+    }
 
-      if (
-        !req.files ||
-        !req.files.excel ||
-        !req.files.excel.length
-      ) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "Excel file required",
-        });
-      }
+    // ==========================================
+    // SHEET VALIDATION
+    // ==========================================
 
+    if (
+      !workbook.SheetNames ||
+      !workbook.SheetNames.length
+    ) {
+      console.log(
+        "❌ NO SHEET FOUND"
+      );
 
-      /* -------------------------
-         Check ZIP
-      ------------------------- */
+      return res.status(400).json({
+        success: false,
+        message:
+          "Excel file does not contain any sheet",
+      });
+    }
 
-      if (
-        !req.files.zip ||
-        !req.files.zip.length
-      ) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "ZIP file required",
-        });
-      }
+    console.log(
+      "SHEETS:",
+      workbook.SheetNames
+    );
 
+    const sheet =
+      workbook.Sheets[
+        workbook.SheetNames[0]
+      ];
 
-      const excelFile =
-        req.files.excel[0];
+    if (!sheet) {
+      console.log(
+        "❌ FIRST SHEET NOT FOUND"
+      );
 
-      const zipFile =
-        req.files.zip[0];
+      return res.status(400).json({
+        success: false,
+        message:
+          "Excel sheet not found",
+      });
+    }
 
+    // ==========================================
+    // SHEET RANGE VALIDATION
+    // ==========================================
 
-      /* -------------------------
-         Create History
-      ------------------------- */
+    const sheetRange =
+      sheet["!ref"];
 
-      history =
-        await LocationBulkUpload.create({
-          fileName:
-            excelFile.originalname,
+    console.log(
+      "SHEET RANGE:",
+      sheetRange
+    );
 
-          status: "Processing",
+    if (!sheetRange) {
+      console.log(
+        "❌ EXCEL SHEET IS COMPLETELY EMPTY"
+      );
 
-          totalRecords: 0,
+      return res.status(400).json({
+        success: false,
+        message:
+          "Excel file is empty. Please add data before uploading.",
+      });
+    }
 
-          successRecords: 0,
+    // ==========================================
+    // READ RAW EXCEL
+    // ==========================================
 
-          failedRecords: 0,
+    const rawRows =
+      XLSX.utils.sheet_to_json(
+        sheet,
+        {
+          header: 1,
+          defval: "",
+          blankrows: false,
+        }
+      );
 
-          errorLog: [],
-        });
+    console.log(
+      "RAW ROW COUNT:",
+      rawRows.length
+    );
 
+    // ==========================================
+    // COMPLETELY EMPTY ROW FILTER
+    // ==========================================
 
-      /* -------------------------
-         Read Excel
-      ------------------------- */
+    const nonEmptyRows =
+      rawRows.filter((row) => {
+        if (!Array.isArray(row)) {
+          return false;
+        }
 
-      const workbook =
-        XLSX.readFile(
-          excelFile.path
+        return row.some(
+          (cell) =>
+            String(cell ?? "").trim() !== ""
         );
+      });
 
-      if (
-        !workbook.SheetNames.length
-      ) {
-        throw new Error(
-          "Excel sheet not found"
+    console.log(
+      "NON EMPTY ROW COUNT:",
+      nonEmptyRows.length
+    );
+
+    // ==========================================
+    // NO ROW AT ALL
+    // ==========================================
+
+    if (
+      nonEmptyRows.length === 0
+    ) {
+      console.log(
+        "❌ EXCEL HAS NO DATA"
+      );
+
+      return res.status(400).json({
+        success: false,
+        message:
+          "Excel file is empty. Please add data before uploading.",
+      });
+    }
+
+    // ==========================================
+    // HEADER VALIDATION
+    // ==========================================
+
+    const headerRow =
+      nonEmptyRows[0];
+
+    console.log(
+      "HEADER ROW:",
+      headerRow
+    );
+
+    const hasHeader =
+      headerRow.some(
+        (cell) =>
+          String(cell ?? "").trim() !== ""
+      );
+
+    if (!hasHeader) {
+      console.log(
+        "❌ HEADER NOT FOUND"
+      );
+
+      return res.status(400).json({
+        success: false,
+        message:
+          "Excel header row is missing",
+      });
+    }
+
+    // ==========================================
+    // DATA ROWS
+    // ==========================================
+
+    const dataRows =
+      nonEmptyRows.slice(1);
+
+    console.log(
+      "DATA ROW COUNT:",
+      dataRows.length
+    );
+
+    // ==========================================
+    // HEADER ONLY EXCEL
+    // ==========================================
+
+    if (
+      dataRows.length === 0
+    ) {
+      console.log(
+        "❌ EXCEL CONTAINS HEADER ONLY"
+      );
+
+      return res.status(400).json({
+        success: false,
+        message:
+          "Excel contains headers but no data rows. Please add at least one record.",
+      });
+    }
+
+    // ==========================================
+    // CHECK ACTUAL DATA
+    // ==========================================
+
+    const hasActualData =
+      dataRows.some((row) => {
+        if (!Array.isArray(row)) {
+          return false;
+        }
+
+        return row.some(
+          (cell) =>
+            String(cell ?? "").trim() !== ""
         );
-      }
+      });
 
+    if (!hasActualData) {
+      console.log(
+        "❌ NO ACTUAL DATA FOUND"
+      );
 
-      const sheet =
-        workbook.Sheets[
-          workbook.SheetNames[0]
-        ];
+      return res.status(400).json({
+        success: false,
+        message:
+          "Excel contains no actual data. Please add at least one record.",
+      });
+    }
 
+    // ==========================================
+    // CONVERT TO OBJECT ROWS
+    // ==========================================
 
-      const rows =
-        XLSX.utils.sheet_to_json(
-          sheet,
-          {
-            defval: "",
-          }
+    const rows =
+      XLSX.utils.sheet_to_json(
+        sheet,
+        {
+          defval: "",
+          raw: false,
+          blankrows: false,
+        }
+      );
+
+    console.log(
+      "OBJECT ROW COUNT:",
+      rows.length
+    );
+
+    // ==========================================
+    // REMOVE COMPLETELY EMPTY OBJECT ROWS
+    // ==========================================
+
+    const validRows =
+      rows.filter((row) => {
+        return Object.values(row).some(
+          (value) =>
+            String(value ?? "").trim() !== ""
         );
+      });
 
+    console.log(
+      "VALID EXCEL ROW COUNT:",
+      validRows.length
+    );
 
-      if (!rows.length) {
+    // ==========================================
+    // FINAL EMPTY VALIDATION
+    // ==========================================
 
-        history.status =
-          "Failed";
+    if (
+      validRows.length === 0
+    ) {
+      console.log(
+        "❌ NO VALID EXCEL ROWS"
+      );
 
-        history.totalRecords = 0;
+      return res.status(400).json({
+        success: false,
+        message:
+          "Excel contains no valid data rows.",
+      });
+    }
 
-        await history.save();
+    // ==========================================
+    // IMPORTANT:
+    // HISTORY CREATED ONLY HERE
+    //
+    // So empty/header-only Excel
+    // will NEVER create history.
+    // ==========================================
 
-        return res.status(400).json({
-          success: false,
-          message:
-            "Excel file is empty",
-        });
-      }
+    console.log(
+      "✅ EXCEL VALIDATION PASSED"
+    );
 
+    console.log(
+      "🔥 CREATING HISTORY NOW..."
+    );
 
-      /* -------------------------
-         Extract ZIP
-      ------------------------- */
+    history =
+      await LocationBulkUpload.create({
+        fileName:
+          excelFile.originalname,
+        status: "Processing",
+        totalRecords:
+          validRows.length,
+        successRecords: 0,
+        failedRecords: 0,
+        errorLog: [],
+      });
 
-      extractFolder =
-        path.join(
-          __dirname,
-          "../uploads/location-temp-" +
-            history._id
-        );
+    console.log(
+      "✅ HISTORY CREATED:",
+      history._id
+    );
 
+    // ==========================================
+    // CREATE EXTRACT FOLDER
+    // ==========================================
 
-      if (
-        !fs.existsSync(
-          extractFolder
-        )
-      ) {
-        fs.mkdirSync(
-          extractFolder,
-          {
-            recursive: true,
-          }
-        );
-      }
+    extractFolder =
+      path.join(
+        __dirname,
+        "../uploads/location-temp-" +
+          history._id
+      );
 
+    console.log(
+      "EXTRACT FOLDER:",
+      extractFolder
+    );
 
-      const zip =
-        new AdmZip(
-          zipFile.path
-        );
+    if (
+      !fs.existsSync(
+        extractFolder
+      )
+    ) {
+      fs.mkdirSync(
+        extractFolder,
+        {
+          recursive: true,
+        }
+      );
+    }
+
+    // ==========================================
+    // EXTRACT ZIP
+    // ==========================================
+
+    console.log(
+      "📦 EXTRACTING ZIP..."
+    );
+
+    let zip;
+
+    try {
+      zip = new AdmZip(
+        zipFile.path
+      );
 
       zip.extractAllTo(
         extractFolder,
         true
       );
+    } catch (zipError) {
+      console.error(
+        "❌ ZIP EXTRACTION ERROR:",
+        zipError
+      );
 
+      throw new Error(
+        "Invalid or corrupted ZIP file"
+      );
+    }
 
-      /* -------------------------
-         Counters
-      ------------------------- */
+    console.log(
+      "✅ ZIP EXTRACTED"
+    );
 
-      let successCount = 0;
+    // ==========================================
+    // DEBUG EXTRACTED FILES
+    // ==========================================
 
-      let failedCount = 0;
-
-      const errorLog = [];
-
-
-      /* -------------------------
-         Process Excel Rows
-      ------------------------- */
-
-      for (
-        let i = 0;
-        i < rows.length;
-        i++
-      ) {
-
-        try {
-
-          const row = rows[i];
-
-
-          /* -------------------------
-             Excel Fields
-          ------------------------- */
-
-          const locationName =
-            row["Location Name"]
-              ?.toString()
-              .trim();
-
-          const audience_reach =
-            row[
-              "Daily Audience Reach"
-            ];
-
-          const media_sites =
-            row[
-              "Ronak Media Sites"
-            ]
-              ?.toString()
-              .trim();
-
-          const ideal =
-  row["Ideal for"]
-    ?.toString()
-    .trim();
-
-const imageName =
-  row["Location Image"]
-    ?.toString()
-    .trim();
-
-console.log(
-  "EXCEL IMAGE NAME:",
-  JSON.stringify(imageName)
-);
-
-console.log(
-  "EXTRACT FOLDER:",
-  extractFolder
-);
-
-console.log(
-  "EXTRACTED FILES:",
-  fs.readdirSync(extractFolder, {
-    recursive: true,
-  })
-);
-
-          /* -------------------------
-             Required Validation
-          ------------------------- */
-
-          if (
-            !locationName ||
-            audience_reach ===
-              "" ||
-            audience_reach ===
-              undefined ||
-            audience_reach ===
-              null ||
-            !media_sites ||
-            !ideal ||
-            !imageName
-          ) {
-
-            failedCount++;
-
-            errorLog.push({
-              rowNo: i + 2,
-
-              locationName,
-
-              message:
-                "Required fields missing",
-            });
-
-            continue;
+    try {
+      const extractedFiles =
+        fs.readdirSync(
+          extractFolder,
+          {
+            recursive: true,
           }
+        );
 
+      console.log(
+        "EXTRACTED FILES:",
+        extractedFiles
+      );
+    } catch (fileError) {
+      console.log(
+        "Unable to list extracted files:",
+        fileError.message
+      );
+    }
 
-          /* -------------------------
-             Audience Reach Number
-          ------------------------- */
+    // ==========================================
+    // COUNTERS
+    // ==========================================
 
-          const audienceNumber =
-            Number(
-              audience_reach
-            );
+    let successCount = 0;
+    let failedCount = 0;
 
+    const errorLog = [];
 
-          if (
-            Number.isNaN(
-              audienceNumber
-            )
-          ) {
+    // ==========================================
+    // PROCESS EACH ROW
+    // ==========================================
 
-            failedCount++;
+    for (
+      let i = 0;
+      i < validRows.length;
+      i++
+    ) {
+      const row = validRows[i];
 
-            errorLog.push({
-              rowNo: i + 2,
+      const excelRowNumber =
+        i + 2;
 
-              locationName,
+      let locationName = "";
 
-              message:
-                "Daily Audience Reach must be a number",
-            });
+      try {
+        console.log("");
+        console.log(
+          "------------------------------------------"
+        );
 
-            continue;
-          }
+        console.log(
+          `PROCESSING ROW: ${excelRowNumber}`
+        );
 
+        console.log(
+          "ROW DATA:",
+          row
+        );
 
-          /* -------------------------
-             Generate Slug
-          ------------------------- */
+        // ======================================
+        // EXCEL FIELDS
+        // ======================================
 
-          const slug =
-            slugify(
-              locationName
-            );
+        locationName =
+          getCellValue(
+            row,
+            "Location Name"
+          );
 
+        const audience_reach =
+          row[
+            "Daily Audience Reach"
+          ];
 
-          /* -------------------------
-             Duplicate Check
-          ------------------------- */
+        const media_sites =
+          getCellValue(
+            row,
+            "Ronak Media Sites"
+          );
 
-          const existing =
-            await Location.findOne({
-              slug,
-            });
+        const ideal =
+          getCellValue(
+            row,
+            "Ideal for"
+          );
 
+        const imageName =
+          getCellValue(
+            row,
+            "Location Image"
+          );
 
-          if (existing) {
+        console.log(
+          "LOCATION NAME:",
+          locationName
+        );
 
-            failedCount++;
+        console.log(
+          "IMAGE NAME:",
+          imageName
+        );
 
-            errorLog.push({
-              rowNo: i + 2,
+        // ======================================
+        // REQUIRED VALIDATION
+        // ======================================
 
-              locationName,
+        if (
+          !locationName ||
+          audience_reach === "" ||
+          audience_reach === undefined ||
+          audience_reach === null ||
+          !media_sites ||
+          !ideal ||
+          !imageName
+        ) {
+          throw new Error(
+            "Required fields missing"
+          );
+        }
 
-              message:
-                "Location already exists",
-            });
+        // ======================================
+        // AUDIENCE NUMBER
+        // ======================================
 
-            continue;
-          }
+        const audienceNumber =
+          Number(
+            audience_reach
+          );
 
+        if (
+          Number.isNaN(
+            audienceNumber
+          )
+        ) {
+          throw new Error(
+            "Daily Audience Reach must be a number"
+          );
+        }
 
-          /* -------------------------
-             Find Image in ZIP
-          ------------------------- */
+        // ======================================
+        // SLUG
+        // ======================================
 
-   const imagePath =
-  findImageInFolder(
-    extractFolder,
-    imageName
-  );
+        const slug =
+          slugify(
+            locationName
+          );
 
-          if (!imagePath) {
+        if (!slug) {
+          throw new Error(
+            "Unable to generate slug"
+          );
+        }
 
-            failedCount++;
+        console.log(
+          "SLUG:",
+          slug
+        );
 
-            errorLog.push({
-              rowNo: i + 2,
+        // ======================================
+        // DUPLICATE CHECK
+        // ======================================
 
-              locationName,
+        const existing =
+          await Location.findOne({
+            slug,
+          });
 
-              message:
-                `Image "${imageName}" not found in ZIP`,
-            });
+        if (existing) {
+          throw new Error(
+            "Location already exists"
+          );
+        }
 
-            continue;
-          }
+        // ======================================
+        // FIND IMAGE
+        // ======================================
 
+        console.log(
+          "🔍 SEARCHING IMAGE:",
+          imageName
+        );
 
-          /* -------------------------
-             Upload Image Cloudinary
-          ------------------------- */
+        const imagePath =
+          findImageInFolder(
+            extractFolder,
+            imageName
+          );
 
-          const imageUrl =
-            await uploadToCloudinary(
-              imagePath,
-              "locations"
-            );
+        if (!imagePath) {
+          throw new Error(
+            `Image "${imageName}" not found in ZIP`
+          );
+        }
 
+        console.log(
+          "IMAGE PATH:",
+          imagePath
+        );
 
-          if (!imageUrl) {
+        // ======================================
+        // CLOUDINARY UPLOAD
+        // ======================================
 
-            throw new Error(
-              "Cloudinary image URL not returned"
-            );
-          }
+        console.log(
+          "☁️ UPLOADING TO CLOUDINARY..."
+        );
 
+        const imageUrl =
+          await uploadToCloudinary(
+            imagePath,
+            "locations"
+          );
 
-          /* -------------------------
-             Save Location
-          ------------------------- */
+        if (!imageUrl) {
+          throw new Error(
+            "Cloudinary image URL not returned"
+          );
+        }
 
+        console.log(
+          "✅ CLOUDINARY URL:",
+          imageUrl
+        );
+
+        // ======================================
+        // CREATE LOCATION
+        // ======================================
+
+        const createdLocation =
           await Location.create({
-
             locationName,
-
             audience_reach:
               audienceNumber,
-
             media_sites,
-
             ideal,
-
             image:
               imageUrl,
-
             slug,
-
             status: 1,
           });
 
+        console.log(
+          "✅ LOCATION CREATED:",
+          createdLocation._id
+        );
 
-          /* -------------------------
-             Success
-          ------------------------- */
+        successCount++;
 
-          successCount++;
+        console.log(
+          `✅ ROW ${excelRowNumber} SUCCESS`
+        );
+      } catch (err) {
+        failedCount++;
 
-        } catch (err) {
+        console.error(
+          `❌ ROW ${excelRowNumber} FAILED:`,
+          err.message
+        );
 
-          failedCount++;
-
-          errorLog.push({
-
-            rowNo: i + 2,
-
-            locationName:
-              rows[i][
-                "Location Name"
-              ],
-
-            message:
-              err.message ||
-              "Unknown error",
-          });
-        }
+        errorLog.push({
+          rowNo:
+            excelRowNumber,
+          locationName,
+          message:
+            err.message ||
+            "Unknown error",
+        });
       }
+    }
 
+    // ==========================================
+    // UPDATE HISTORY
+    // ==========================================
 
-      /* -------------------------
-         Update History
-      ------------------------- */
+    console.log("");
+    console.log(
+      "=========================================="
+    );
 
-      history.totalRecords =
-        rows.length;
+    console.log(
+      "UPDATING HISTORY"
+    );
 
-      history.successRecords =
-        successCount;
+    console.log(
+      "TOTAL:",
+      validRows.length
+    );
 
-      history.failedRecords =
-        failedCount;
+    console.log(
+      "SUCCESS:",
+      successCount
+    );
 
-      history.errorLog =
-        errorLog;
+    console.log(
+      "FAILED:",
+      failedCount
+    );
 
-      history.status =
-        "Completed";
+    console.log(
+      "=========================================="
+    );
 
-      await history.save();
+    history.totalRecords =
+      validRows.length;
 
+    history.successRecords =
+      successCount;
 
-      /* -------------------------
-         Response
-      ------------------------- */
+    history.failedRecords =
+      failedCount;
 
-      return res.status(200).json({
+    history.errorLog =
+      errorLog;
 
-        success: true,
+    history.status =
+      "Completed";
 
-        message:
-          "Bulk upload completed",
+    await history.save();
 
-        data: {
+    console.log(
+      "✅ HISTORY UPDATED:",
+      history._id
+    );
 
-          totalRecords:
-            rows.length,
+    // ==========================================
+    // RESPONSE
+    // ==========================================
 
-          successRecords:
-            successCount,
+    return res.status(200).json({
+      success: true,
+      message:
+        "Bulk upload completed",
+      data: {
+        totalRecords:
+          validRows.length,
+        successRecords:
+          successCount,
+        failedRecords:
+          failedCount,
+      },
+    });
+  } catch (error) {
+    // ==========================================
+    // GLOBAL ERROR
+    // ==========================================
 
-          failedRecords:
-            failedCount,
-        },
-      });
+    console.error("");
+    console.error(
+      "=========================================="
+    );
+    console.error(
+      `❌ BULK UPLOAD FAILED: ${requestId}`
+    );
+    console.error(
+      "ERROR:",
+      error
+    );
+    console.error(
+      "MESSAGE:",
+      error.message
+    );
+    console.error(
+      "=========================================="
+    );
 
-    } catch (error) {
+    // ==========================================
+    // UPDATE HISTORY ONLY IF CREATED
+    // ==========================================
 
-      /* -------------------------
-         Update History Failed
-      ------------------------- */
-
-      if (history) {
-
+    if (history) {
+      try {
         history.status =
           "Failed";
 
         history.errorLog = [
           {
             rowNo: 0,
-
             message:
-              error.message,
+              error.message ||
+              "Bulk upload failed",
           },
         ];
 
         await history.save();
+
+        console.log(
+          "❌ HISTORY MARKED FAILED:",
+          history._id
+        );
+      } catch (historyError) {
+        console.error(
+          "History update failed:",
+          historyError
+        );
       }
+    } else {
+      console.log(
+        "ℹ️ NO HISTORY CREATED BECAUSE VALIDATION FAILED BEFORE HISTORY CREATION"
+      );
+    }
 
+    return res.status(500).json({
+      success: false,
+      message:
+        error.message ||
+        "Bulk upload failed",
+    });
+  } finally {
+    // ==========================================
+    // DELETE EXTRACT FOLDER
+    // ==========================================
 
-      return res.status(500).json({
-
-        success: false,
-
-        message:
-          error.message ||
-          "Bulk upload failed",
-      });
-
-    } finally {
-
-      /* -------------------------
-         Delete Extracted Files
-      ------------------------- */
-
-      if (
-        extractFolder &&
-        fs.existsSync(
-          extractFolder
-        )
-      ) {
-
+    if (
+      extractFolder &&
+      fs.existsSync(
+        extractFolder
+      )
+    ) {
+      try {
         fs.rmSync(
           extractFolder,
           {
@@ -662,50 +1168,98 @@ console.log(
             force: true,
           }
         );
-      }
 
-
-      /* -------------------------
-         Delete Excel
-      ------------------------- */
-
-      if (
-        req.files?.excel?.[0]?.path &&
-        fs.existsSync(
-          req.files.excel[0].path
-        )
-      ) {
-
-        fs.unlinkSync(
-          req.files.excel[0].path
+        console.log(
+          "🗑️ EXTRACT FOLDER DELETED"
         );
-      }
-
-
-      /* -------------------------
-         Delete ZIP
-      ------------------------- */
-
-      if (
-        req.files?.zip?.[0]?.path &&
-        fs.existsSync(
-          req.files.zip[0].path
-        )
-      ) {
-
-        fs.unlinkSync(
-          req.files.zip[0].path
+      } catch (cleanupError) {
+        console.error(
+          "Extract folder cleanup error:",
+          cleanupError.message
         );
       }
     }
-  };
-const getBulkUploadList = async (req, res) => {
-  try {
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
-    const search = req.query.search?.toString().trim() || "";
 
-    const skip = (page - 1) * limit;
+    // ==========================================
+    // DELETE EXCEL
+    // ==========================================
+
+    if (
+      req.files?.excel?.[0]?.path &&
+      fs.existsSync(
+        req.files.excel[0].path
+      )
+    ) {
+      try {
+        fs.unlinkSync(
+          req.files.excel[0].path
+        );
+
+        console.log(
+          "🗑️ EXCEL FILE DELETED"
+        );
+      } catch (cleanupError) {
+        console.error(
+          "Excel cleanup error:",
+          cleanupError.message
+        );
+      }
+    }
+
+    // ==========================================
+    // DELETE ZIP
+    // ==========================================
+
+    if (
+      req.files?.zip?.[0]?.path &&
+      fs.existsSync(
+        req.files.zip[0].path
+      )
+    ) {
+      try {
+        fs.unlinkSync(
+          req.files.zip[0].path
+        );
+
+        console.log(
+          "🗑️ ZIP FILE DELETED"
+        );
+      } catch (cleanupError) {
+        console.error(
+          "ZIP cleanup error:",
+          cleanupError.message
+        );
+      }
+    }
+
+    console.log(
+      `🏁 BULK UPLOAD REQUEST FINISHED: ${requestId}`
+    );
+  }
+};
+
+// ==========================================
+// GET BULK UPLOAD LIST
+// ==========================================
+
+const getBulkUploadList = async (
+  req,
+  res
+) => {
+  try {
+    const page =
+      Number(req.query.page) || 1;
+
+    const limit =
+      Number(req.query.limit) || 10;
+
+    const search =
+      req.query.search
+        ?.toString()
+        .trim() || "";
+
+    const skip =
+      (page - 1) * limit;
 
     const filter = {};
 
@@ -716,14 +1270,23 @@ const getBulkUploadList = async (req, res) => {
       };
     }
 
-    const [records, total] = await Promise.all([
-      LocationBulkUpload.find(filter)
-        .sort({ createdAt: -1 })
+    const [
+      records,
+      total,
+    ] = await Promise.all([
+      LocationBulkUpload.find(
+        filter
+      )
+        .sort({
+          createdAt: -1,
+        })
         .skip(skip)
         .limit(limit)
         .lean(),
 
-      LocationBulkUpload.countDocuments(filter),
+      LocationBulkUpload.countDocuments(
+        filter
+      ),
     ]);
 
     return res.status(200).json({
@@ -733,19 +1296,32 @@ const getBulkUploadList = async (req, res) => {
         total,
         page,
         limit,
-        totalPages: Math.ceil(total / limit),
+        totalPages:
+          Math.ceil(
+            total / limit
+          ),
       },
     });
   } catch (error) {
-    console.error("Get Bulk Upload List Error:", error);
+    console.error(
+      "Get Bulk Upload List Error:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
-      message: "Failed to fetch bulk upload list",
-      error: error.message,
+      message:
+        "Failed to fetch bulk upload list",
+      error:
+        error.message,
     });
   }
 };
+
+// ==========================================
+// EXPORT
+// ==========================================
+
 module.exports = {
   bulkUploadLocations,
   getBulkUploadList,
