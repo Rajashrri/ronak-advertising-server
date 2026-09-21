@@ -28,6 +28,7 @@ const caseStudyRoutes = require("./router/caseStudyRoutes");
 
 const locationBulkUploadRoutes = require("./router/locationBulkUploadRoutes");
 
+const locationMainBulkUploadRoutes = require("./router/locationMainBulkUpload");
 
 const caseStudyTestimonialRoutes = require("./router/caseStudyTestimonialRoutes");
 
@@ -110,7 +111,7 @@ app.use("/api/media-coverage", mediaCoverageRouter);
 
 app.use("/api/location-bulk-upload", locationBulkUploadRoutes);
 
-
+app.use("/api/location-main-bulk-upload", locationMainBulkUploadRoutes);
 
 app.use("/api/ckeditor", ckeditorRoutes);
 app.get("/health", (req, res) => {
