@@ -1203,7 +1203,7 @@ const bulkUploadLocations = async (
       success: true,
 
       message:
-        "Bulk upload completed",
+        "The bulk upload for Locations has been completed",
 
       data: {
         totalRecords:
