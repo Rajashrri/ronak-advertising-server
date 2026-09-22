@@ -6,10 +6,14 @@ const locationBulkUpload =
 
 const {
   bulkUploadLocations,
-  getBulkUploadList,
+  getBulkUploadList,downloadExcel
 } = require("../controllers/locationBulkUploadController");
 
 
+router.get(
+  "/download/:id",
+  downloadExcel
+);
 // GET
 // /api/location-bulk-upload/list
 router.get(

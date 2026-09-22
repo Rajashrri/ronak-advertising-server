@@ -6,7 +6,9 @@ const path = require("path");
 const Location = require("../models/Location");
 const LocationBulkUpload = require("../models/LocationBulkUpload");
 
-const { uploadToCloudinary } = require("../utils/upload");
+const {
+  uploadToCloudinary,
+} = require("../utils/upload");
 
 // ==========================================
 // CONTROLLER LOADED
@@ -15,10 +17,16 @@ const { uploadToCloudinary } = require("../utils/upload");
 console.log(
   "=============================================="
 );
+
 console.log(
   "✅ LOCATION BULK UPLOAD CONTROLLER LOADED"
 );
-console.log("__filename:", __filename);
+
+console.log(
+  "__filename:",
+  __filename
+);
+
 console.log(
   "=============================================="
 );
@@ -52,11 +60,19 @@ const normalizeFileName = (name) => {
         .replace(/\\/g, "/")
     )
     .normalize("NFKC")
-    .replace(/[\s\u200B-\u200D\uFEFF]+/g, "")
+    .replace(
+      /[\s\u200B-\u200D\uFEFF]+/g,
+      ""
+    )
     .replace(/^["']|["']$/g, "")
     .toLowerCase();
 
-  // Remove duplicate extension
+  // ==========================================
+  // REMOVE DUPLICATE EXTENSION
+  // Example:
+  // image.webp.webp -> image.webp
+  // ==========================================
+
   const imageExtensions = [
     ".webp",
     ".jpg",
@@ -67,7 +83,11 @@ const normalizeFileName = (name) => {
 
   for (const ext of imageExtensions) {
     if (fileName.endsWith(ext + ext)) {
-      fileName = fileName.slice(0, -ext.length);
+      fileName = fileName.slice(
+        0,
+        -ext.length
+      );
+
       break;
     }
   }
@@ -79,8 +99,12 @@ const normalizeFileName = (name) => {
 // FIND IMAGE RECURSIVELY
 // ==========================================
 
-const findImageInFolder = (folder, imageName) => {
-  const targetName = normalizeFileName(imageName);
+const findImageInFolder = (
+  folder,
+  imageName
+) => {
+  const targetName =
+    normalizeFileName(imageName);
 
   if (!targetName) {
     return null;
@@ -91,9 +115,12 @@ const findImageInFolder = (folder, imageName) => {
   }
 
   const scan = (currentFolder) => {
-    const files = fs.readdirSync(currentFolder, {
-      withFileTypes: true,
-    });
+    const files = fs.readdirSync(
+      currentFolder,
+      {
+        withFileTypes: true,
+      }
+    );
 
     for (const file of files) {
       const fullPath = path.join(
@@ -101,6 +128,7 @@ const findImageInFolder = (folder, imageName) => {
         file.name
       );
 
+      // Directory
       if (file.isDirectory()) {
         const found = scan(fullPath);
 
@@ -111,6 +139,7 @@ const findImageInFolder = (folder, imageName) => {
         continue;
       }
 
+      // File
       const normalizedFileName =
         normalizeFileName(file.name);
 
@@ -145,8 +174,15 @@ const findImageInFolder = (folder, imageName) => {
 // GET CELL VALUE SAFELY
 // ==========================================
 
-const getCellValue = (row, key) => {
-  if (!row || row[key] === undefined || row[key] === null) {
+const getCellValue = (
+  row,
+  key
+) => {
+  if (
+    !row ||
+    row[key] === undefined ||
+    row[key] === null
+  ) {
     return "";
   }
 
@@ -157,7 +193,10 @@ const getCellValue = (row, key) => {
 // BULK UPLOAD LOCATIONS
 // ==========================================
 
-const bulkUploadLocations = async (req, res) => {
+const bulkUploadLocations = async (
+  req,
+  res
+) => {
   let extractFolder = null;
   let history = null;
 
@@ -168,12 +207,15 @@ const bulkUploadLocations = async (req, res) => {
       .substring(2, 8);
 
   console.log("");
+
   console.log(
     "=================================================="
   );
+
   console.log(
     `🔥 BULK UPLOAD REQUEST STARTED: ${requestId}`
   );
+
   console.log(
     "=================================================="
   );
@@ -220,7 +262,8 @@ const bulkUploadLocations = async (req, res) => {
 
       return res.status(400).json({
         success: false,
-        message: "Excel file required",
+        message:
+          "Excel file required",
       });
     }
 
@@ -238,9 +281,14 @@ const bulkUploadLocations = async (req, res) => {
 
       return res.status(400).json({
         success: false,
-        message: "ZIP file required",
+        message:
+          "ZIP file required",
       });
     }
+
+    // ==========================================
+    // GET FILES
+    // ==========================================
 
     const excelFile =
       req.files.excel[0];
@@ -249,7 +297,7 @@ const bulkUploadLocations = async (req, res) => {
       req.files.zip[0];
 
     console.log(
-      "EXCEL:",
+      "EXCEL FILE:",
       excelFile.originalname
     );
 
@@ -259,7 +307,7 @@ const bulkUploadLocations = async (req, res) => {
     );
 
     console.log(
-      "ZIP:",
+      "ZIP FILE:",
       zipFile.originalname
     );
 
@@ -272,24 +320,21 @@ const bulkUploadLocations = async (req, res) => {
     // FILE EXTENSION VALIDATION
     // ==========================================
 
-    const excelExtension = path
-      .extname(excelFile.originalname)
-      .toLowerCase();
+    const excelExtension =
+      path
+        .extname(
+          excelFile.originalname
+        )
+        .toLowerCase();
 
-    const zipExtension = path
-      .extname(zipFile.originalname)
-      .toLowerCase();
+    const zipExtension =
+      path
+        .extname(
+          zipFile.originalname
+        )
+        .toLowerCase();
 
-    console.log(
-      "EXCEL EXTENSION:",
-      excelExtension
-    );
-
-    console.log(
-      "ZIP EXTENSION:",
-      zipExtension
-    );
-
+    // Excel validation
     if (
       excelExtension !== ".xlsx" &&
       excelExtension !== ".xls"
@@ -301,7 +346,10 @@ const bulkUploadLocations = async (req, res) => {
       });
     }
 
-    if (zipExtension !== ".zip") {
+    // ZIP validation
+    if (
+      zipExtension !== ".zip"
+    ) {
       return res.status(400).json({
         success: false,
         message:
@@ -310,11 +358,13 @@ const bulkUploadLocations = async (req, res) => {
     }
 
     // ==========================================
-    // CHECK FILE EXISTS
+    // CHECK LOCAL FILE EXISTS
     // ==========================================
 
     if (
-      !fs.existsSync(excelFile.path)
+      !fs.existsSync(
+        excelFile.path
+      )
     ) {
       console.log(
         "❌ EXCEL FILE DOES NOT EXIST:",
@@ -329,7 +379,9 @@ const bulkUploadLocations = async (req, res) => {
     }
 
     if (
-      !fs.existsSync(zipFile.path)
+      !fs.existsSync(
+        zipFile.path
+      )
     ) {
       console.log(
         "❌ ZIP FILE DOES NOT EXIST:",
@@ -344,8 +396,44 @@ const bulkUploadLocations = async (req, res) => {
     }
 
     // ==========================================
-    // READ EXCEL
+    // UPLOAD EXCEL TO CLOUDINARY
+    // ==========================================
+    //
     // IMPORTANT:
+    // raw = Excel file
+    // false = local file ko abhi delete mat karo
+    //
+    // Excel ko read karna hai:
+    // XLSX.readFile(excelFile.path)
+    //
+    // ==========================================
+
+    console.log(
+      "☁️ UPLOADING EXCEL TO CLOUDINARY..."
+    );
+
+    const excelCloudinaryUrl =
+      await uploadToCloudinary(
+        excelFile.path,
+        "location-bulk-files",
+        "raw",
+        false
+      );
+
+    if (!excelCloudinaryUrl) {
+      throw new Error(
+        "Cloudinary Excel URL not returned"
+      );
+    }
+
+    console.log(
+      "✅ EXCEL CLOUDINARY URL:",
+      excelCloudinaryUrl
+    );
+
+    // ==========================================
+    // READ EXCEL
+    //
     // HISTORY IS NOT CREATED YET
     // ==========================================
 
@@ -356,12 +444,13 @@ const bulkUploadLocations = async (req, res) => {
     let workbook;
 
     try {
-      workbook = XLSX.readFile(
-        excelFile.path,
-        {
-          cellDates: true,
-        }
-      );
+      workbook =
+        XLSX.readFile(
+          excelFile.path,
+          {
+            cellDates: true,
+          }
+        );
     } catch (excelError) {
       console.error(
         "❌ EXCEL READ ERROR:",
@@ -460,20 +549,24 @@ const bulkUploadLocations = async (req, res) => {
     );
 
     // ==========================================
-    // COMPLETELY EMPTY ROW FILTER
+    // REMOVE COMPLETELY EMPTY ROWS
     // ==========================================
 
     const nonEmptyRows =
-      rawRows.filter((row) => {
-        if (!Array.isArray(row)) {
-          return false;
-        }
+      rawRows.filter(
+        (row) => {
+          if (!Array.isArray(row)) {
+            return false;
+          }
 
-        return row.some(
-          (cell) =>
-            String(cell ?? "").trim() !== ""
-        );
-      });
+          return row.some(
+            (cell) =>
+              String(
+                cell ?? ""
+              ).trim() !== ""
+          );
+        }
+      );
 
     console.log(
       "NON EMPTY ROW COUNT:",
@@ -481,7 +574,7 @@ const bulkUploadLocations = async (req, res) => {
     );
 
     // ==========================================
-    // NO ROW AT ALL
+    // NO ROW
     // ==========================================
 
     if (
@@ -513,7 +606,9 @@ const bulkUploadLocations = async (req, res) => {
     const hasHeader =
       headerRow.some(
         (cell) =>
-          String(cell ?? "").trim() !== ""
+          String(
+            cell ?? ""
+          ).trim() !== ""
       );
 
     if (!hasHeader) {
@@ -541,7 +636,7 @@ const bulkUploadLocations = async (req, res) => {
     );
 
     // ==========================================
-    // HEADER ONLY EXCEL
+    // HEADER ONLY
     // ==========================================
 
     if (
@@ -563,16 +658,20 @@ const bulkUploadLocations = async (req, res) => {
     // ==========================================
 
     const hasActualData =
-      dataRows.some((row) => {
-        if (!Array.isArray(row)) {
-          return false;
-        }
+      dataRows.some(
+        (row) => {
+          if (!Array.isArray(row)) {
+            return false;
+          }
 
-        return row.some(
-          (cell) =>
-            String(cell ?? "").trim() !== ""
-        );
-      });
+          return row.some(
+            (cell) =>
+              String(
+                cell ?? ""
+              ).trim() !== ""
+          );
+        }
+      );
 
     if (!hasActualData) {
       console.log(
@@ -606,16 +705,22 @@ const bulkUploadLocations = async (req, res) => {
     );
 
     // ==========================================
-    // REMOVE COMPLETELY EMPTY OBJECT ROWS
+    // REMOVE EMPTY OBJECT ROWS
     // ==========================================
 
     const validRows =
-      rows.filter((row) => {
-        return Object.values(row).some(
-          (value) =>
-            String(value ?? "").trim() !== ""
-        );
-      });
+      rows.filter(
+        (row) => {
+          return Object.values(
+            row
+          ).some(
+            (value) =>
+              String(
+                value ?? ""
+              ).trim() !== ""
+          );
+        }
+      );
 
     console.log(
       "VALID EXCEL ROW COUNT:",
@@ -642,10 +747,8 @@ const bulkUploadLocations = async (req, res) => {
 
     // ==========================================
     // IMPORTANT:
-    // HISTORY CREATED ONLY HERE
-    //
-    // So empty/header-only Excel
-    // will NEVER create history.
+    // HISTORY CREATED ONLY AFTER
+    // EXCEL VALIDATION PASSES
     // ==========================================
 
     console.log(
@@ -660,11 +763,22 @@ const bulkUploadLocations = async (req, res) => {
       await LocationBulkUpload.create({
         fileName:
           excelFile.originalname,
-        status: "Processing",
+
+        excelFilePath:
+          excelCloudinaryUrl,
+
+        status:
+          "Processing",
+
         totalRecords:
-          validRows.length,
-        successRecords: 0,
-        failedRecords: 0,
+          0,
+
+        successRecords:
+          0,
+
+        failedRecords:
+          0,
+
         errorLog: [],
       });
 
@@ -713,14 +827,16 @@ const bulkUploadLocations = async (req, res) => {
     let zip;
 
     try {
-      zip = new AdmZip(
-        zipFile.path
-      );
+      zip =
+        new AdmZip(
+          zipFile.path
+        );
 
       zip.extractAllTo(
         extractFolder,
         true
       );
+
     } catch (zipError) {
       console.error(
         "❌ ZIP EXTRACTION ERROR:",
@@ -753,6 +869,7 @@ const bulkUploadLocations = async (req, res) => {
         "EXTRACTED FILES:",
         extractedFiles
       );
+
     } catch (fileError) {
       console.log(
         "Unable to list extracted files:",
@@ -778,7 +895,8 @@ const bulkUploadLocations = async (req, res) => {
       i < validRows.length;
       i++
     ) {
-      const row = validRows[i];
+      const row =
+        validRows[i];
 
       const excelRowNumber =
         i + 2;
@@ -787,6 +905,7 @@ const bulkUploadLocations = async (req, res) => {
 
       try {
         console.log("");
+
         console.log(
           "------------------------------------------"
         );
@@ -942,11 +1061,11 @@ const bulkUploadLocations = async (req, res) => {
         );
 
         // ======================================
-        // CLOUDINARY UPLOAD
+        // UPLOAD IMAGE TO CLOUDINARY
         // ======================================
 
         console.log(
-          "☁️ UPLOADING TO CLOUDINARY..."
+          "☁️ UPLOADING IMAGE TO CLOUDINARY..."
         );
 
         const imageUrl =
@@ -962,7 +1081,7 @@ const bulkUploadLocations = async (req, res) => {
         }
 
         console.log(
-          "✅ CLOUDINARY URL:",
+          "✅ CLOUDINARY IMAGE URL:",
           imageUrl
         );
 
@@ -973,13 +1092,19 @@ const bulkUploadLocations = async (req, res) => {
         const createdLocation =
           await Location.create({
             locationName,
+
             audience_reach:
               audienceNumber,
+
             media_sites,
+
             ideal,
+
             image:
               imageUrl,
+
             slug,
+
             status: 1,
           });
 
@@ -993,6 +1118,7 @@ const bulkUploadLocations = async (req, res) => {
         console.log(
           `✅ ROW ${excelRowNumber} SUCCESS`
         );
+
       } catch (err) {
         failedCount++;
 
@@ -1004,7 +1130,9 @@ const bulkUploadLocations = async (req, res) => {
         errorLog.push({
           rowNo:
             excelRowNumber,
+
           locationName,
+
           message:
             err.message ||
             "Unknown error",
@@ -1017,6 +1145,7 @@ const bulkUploadLocations = async (req, res) => {
     // ==========================================
 
     console.log("");
+
     console.log(
       "=========================================="
     );
@@ -1072,37 +1201,47 @@ const bulkUploadLocations = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+
       message:
         "Bulk upload completed",
+
       data: {
         totalRecords:
           validRows.length,
+
         successRecords:
           successCount,
+
         failedRecords:
           failedCount,
       },
     });
+
   } catch (error) {
     // ==========================================
     // GLOBAL ERROR
     // ==========================================
 
     console.error("");
+
     console.error(
       "=========================================="
     );
+
     console.error(
       `❌ BULK UPLOAD FAILED: ${requestId}`
     );
+
     console.error(
       "ERROR:",
       error
     );
+
     console.error(
       "MESSAGE:",
       error.message
     );
+
     console.error(
       "=========================================="
     );
@@ -1119,6 +1258,7 @@ const bulkUploadLocations = async (req, res) => {
         history.errorLog = [
           {
             rowNo: 0,
+
             message:
               error.message ||
               "Bulk upload failed",
@@ -1131,12 +1271,14 @@ const bulkUploadLocations = async (req, res) => {
           "❌ HISTORY MARKED FAILED:",
           history._id
         );
+
       } catch (historyError) {
         console.error(
           "History update failed:",
           historyError
         );
       }
+
     } else {
       console.log(
         "ℹ️ NO HISTORY CREATED BECAUSE VALIDATION FAILED BEFORE HISTORY CREATION"
@@ -1145,10 +1287,12 @@ const bulkUploadLocations = async (req, res) => {
 
     return res.status(500).json({
       success: false,
+
       message:
         error.message ||
         "Bulk upload failed",
     });
+
   } finally {
     // ==========================================
     // DELETE EXTRACT FOLDER
@@ -1172,6 +1316,7 @@ const bulkUploadLocations = async (req, res) => {
         console.log(
           "🗑️ EXTRACT FOLDER DELETED"
         );
+
       } catch (cleanupError) {
         console.error(
           "Extract folder cleanup error:",
@@ -1181,7 +1326,7 @@ const bulkUploadLocations = async (req, res) => {
     }
 
     // ==========================================
-    // DELETE EXCEL
+    // DELETE LOCAL EXCEL
     // ==========================================
 
     if (
@@ -1198,6 +1343,7 @@ const bulkUploadLocations = async (req, res) => {
         console.log(
           "🗑️ EXCEL FILE DELETED"
         );
+
       } catch (cleanupError) {
         console.error(
           "Excel cleanup error:",
@@ -1207,7 +1353,7 @@ const bulkUploadLocations = async (req, res) => {
     }
 
     // ==========================================
-    // DELETE ZIP
+    // DELETE LOCAL ZIP
     // ==========================================
 
     if (
@@ -1224,6 +1370,7 @@ const bulkUploadLocations = async (req, res) => {
         console.log(
           "🗑️ ZIP FILE DELETED"
         );
+
       } catch (cleanupError) {
         console.error(
           "ZIP cleanup error:",
@@ -1291,17 +1438,23 @@ const getBulkUploadList = async (
 
     return res.status(200).json({
       success: true,
+
       data: records,
+
       pagination: {
         total,
+
         page,
+
         limit,
+
         totalPages:
           Math.ceil(
             total / limit
           ),
       },
     });
+
   } catch (error) {
     console.error(
       "Get Bulk Upload List Error:",
@@ -1310,9 +1463,58 @@ const getBulkUploadList = async (
 
     return res.status(500).json({
       success: false,
+
       message:
         "Failed to fetch bulk upload list",
+
       error:
+        error.message,
+    });
+  }
+};
+
+// ==========================================
+// DOWNLOAD EXCEL
+// ==========================================
+
+const downloadExcel = async (
+  req,
+  res
+) => {
+  try {
+    const record =
+      await LocationBulkUpload.findById(
+        req.params.id
+      );
+
+    if (
+      !record ||
+      !record.excelFilePath
+    ) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Excel file not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+
+      data: {
+        fileName:
+          record.fileName,
+
+        fileUrl:
+          record.excelFilePath,
+      },
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+
+      message:
         error.message,
     });
   }
@@ -1325,4 +1527,5 @@ const getBulkUploadList = async (
 module.exports = {
   bulkUploadLocations,
   getBulkUploadList,
+  downloadExcel,
 };

@@ -30,7 +30,10 @@ const locationBulkUploadSchema = new mongoose.Schema(
       enum: ["Processing", "Completed", "Failed"],
       default: "Processing",
     },
-
+excelFilePath: {
+  type: String,
+  default: "",
+},
     errorLog: [
       {
         rowNo: Number,
