@@ -25,7 +25,6 @@ const slugify = (text) => {
 
 // ==========================================
 // ALLOWED MEDIA TYPES
-// EXACT SAME AS ADD LOCATION MAIN
 // ==========================================
 
 const ALLOWED_MEDIA_TYPES = [
@@ -87,7 +86,10 @@ const findImageInFolder = (folder, imageName) => {
     });
 
     for (const file of files) {
-      const fullPath = path.join(currentFolder, file.name);
+      const fullPath = path.join(
+        currentFolder,
+        file.name
+      );
 
       if (file.isDirectory()) {
         const found = scan(fullPath);
@@ -99,7 +101,8 @@ const findImageInFolder = (folder, imageName) => {
         continue;
       }
 
-      const normalizedFileName = normalizeFileName(file.name);
+      const normalizedFileName =
+        normalizeFileName(file.name);
 
       console.log(
         "CHECK IMAGE:",
@@ -137,9 +140,15 @@ const bulkUploadLocationMain = async (req, res) => {
   let galleryZipFile = null;
 
   try {
-    console.log("======================================");
-    console.log("LOCATION MAIN BULK UPLOAD STARTED");
-    console.log("======================================");
+    console.log(
+      "======================================"
+    );
+    console.log(
+      "LOCATION MAIN BULK UPLOAD STARTED"
+    );
+    console.log(
+      "======================================"
+    );
 
     // ======================================
     // CHECK EXCEL
@@ -184,8 +193,16 @@ const bulkUploadLocationMain = async (req, res) => {
         ? req.files.galleryZip[0]
         : null;
 
-    console.log("Excel:", excelFile.originalname);
-    console.log("Main ZIP:", mainZipFile.originalname);
+    console.log(
+      "Excel:",
+      excelFile.originalname
+    );
+
+    console.log(
+      "Main ZIP:",
+      mainZipFile.originalname
+    );
+
     console.log(
       "Gallery ZIP:",
       galleryZipFile
@@ -207,12 +224,13 @@ const bulkUploadLocationMain = async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: "Only Excel files (.xlsx, .xls) are allowed",
+        message:
+          "Only Excel files (.xlsx, .xls) are allowed",
       });
     }
 
     // ======================================
-    // VALIDATE MAIN ZIP EXTENSION
+    // VALIDATE MAIN ZIP
     // ======================================
 
     const mainZipExtension = path
@@ -222,12 +240,13 @@ const bulkUploadLocationMain = async (req, res) => {
     if (mainZipExtension !== ".zip") {
       return res.status(400).json({
         success: false,
-        message: "Main Images file must be a ZIP",
+        message:
+          "Main Images file must be a ZIP",
       });
     }
 
     // ======================================
-    // VALIDATE GALLERY ZIP EXTENSION
+    // VALIDATE GALLERY ZIP
     // ======================================
 
     if (galleryZipFile) {
@@ -238,7 +257,8 @@ const bulkUploadLocationMain = async (req, res) => {
       if (galleryZipExtension !== ".zip") {
         return res.status(400).json({
           success: false,
-          message: "Gallery Images file must be a ZIP",
+          message:
+            "Gallery Images file must be a ZIP",
         });
       }
     }
@@ -249,9 +269,12 @@ const bulkUploadLocationMain = async (req, res) => {
 
     console.log("Reading Excel...");
 
-    const workbook = XLSX.readFile(excelFile.path, {
-      cellDates: true,
-    });
+    const workbook = XLSX.readFile(
+      excelFile.path,
+      {
+        cellDates: true,
+      }
+    );
 
     // ======================================
     // CHECK SHEETS
@@ -267,15 +290,34 @@ const bulkUploadLocationMain = async (req, res) => {
       });
     }
 
-    const sheetName = workbook.SheetNames[0];
+    const sheetName =
+      workbook.SheetNames[0];
 
-    const sheet = workbook.Sheets[sheetName];
+    const sheet =
+      workbook.Sheets[sheetName];
 
-    console.log("======================================");
-    console.log("EXCEL FILE:", excelFile.originalname);
-    console.log("SHEET NAME:", sheetName);
-    console.log("SHEET REF:", sheet["!ref"]);
-    console.log("======================================");
+    console.log(
+      "======================================"
+    );
+
+    console.log(
+      "EXCEL FILE:",
+      excelFile.originalname
+    );
+
+    console.log(
+      "SHEET NAME:",
+      sheetName
+    );
+
+    console.log(
+      "SHEET REF:",
+      sheet ? sheet["!ref"] : null
+    );
+
+    console.log(
+      "======================================"
+    );
 
     // ======================================
     // CHECK SHEET REF
@@ -292,27 +334,34 @@ const bulkUploadLocationMain = async (req, res) => {
     // READ RAW EXCEL
     // ======================================
 
-    const rawRows = XLSX.utils.sheet_to_json(sheet, {
-      header: 1,
-      defval: "",
-      blankrows: false,
-    });
-
-    console.log("RAW EXCEL ROW COUNT:", rawRows.length);
-
-    // ======================================
-    // REMOVE COMPLETELY EMPTY ROWS
-    // ======================================
-
-    const nonEmptyRows = rawRows.filter((row) => {
-      if (!Array.isArray(row)) {
-        return false;
-      }
-
-      return row.some((cell) => {
-        return String(cell ?? "").trim() !== "";
+    const rawRows =
+      XLSX.utils.sheet_to_json(sheet, {
+        header: 1,
+        defval: "",
+        blankrows: false,
       });
-    });
+
+    console.log(
+      "RAW EXCEL ROW COUNT:",
+      rawRows.length
+    );
+
+    // ======================================
+    // REMOVE EMPTY ROWS
+    // ======================================
+
+    const nonEmptyRows =
+      rawRows.filter((row) => {
+        if (!Array.isArray(row)) {
+          return false;
+        }
+
+        return row.some((cell) => {
+          return (
+            String(cell ?? "").trim() !== ""
+          );
+        });
+      });
 
     console.log(
       "NON EMPTY ROW COUNT:",
@@ -320,7 +369,7 @@ const bulkUploadLocationMain = async (req, res) => {
     );
 
     // ======================================
-    // EXCEL COMPLETELY EMPTY
+    // EXCEL EMPTY
     // ======================================
 
     if (nonEmptyRows.length === 0) {
@@ -331,22 +380,24 @@ const bulkUploadLocationMain = async (req, res) => {
     }
 
     // ======================================
-    // HEADER ROW
+    // HEADER
     // ======================================
 
-    const headers = nonEmptyRows[0].map((header) =>
-      String(header ?? "").trim()
+    const headers =
+      nonEmptyRows[0].map((header) =>
+        String(header ?? "").trim()
+      );
+
+    console.log(
+      "EXCEL HEADERS:",
+      headers
     );
-
-    console.log("EXCEL HEADERS:", headers);
-
-    // ======================================
-    // HEADER COMPLETELY EMPTY
-    // ======================================
 
     if (
       !headers.length ||
-      headers.every((header) => header === "")
+      headers.every(
+        (header) => header === ""
+      )
     ) {
       return res.status(400).json({
         success: false,
@@ -358,50 +409,44 @@ const bulkUploadLocationMain = async (req, res) => {
     // DATA ROWS
     // ======================================
 
-    const dataRows = nonEmptyRows.slice(1);
+    const dataRows =
+      nonEmptyRows.slice(1);
 
     console.log(
       "DATA ROW COUNT:",
       dataRows.length
     );
 
-    // ======================================
-    // ONLY HEADER - NO DATA
-    // ======================================
-
     if (dataRows.length === 0) {
-      console.log(
-        "NO DATA ROWS - HISTORY WILL NOT BE CREATED"
-      );
-
       return res.status(400).json({
         success: false,
-        message: "Excel contains headers but no data rows",
+        message:
+          "Excel contains headers but no data rows",
       });
     }
 
     // ======================================
-    // CHECK ACTUAL DATA
+    // ACTUAL DATA CHECK
     // ======================================
 
-    const hasActualData = dataRows.some((row) => {
-      if (!Array.isArray(row)) {
-        return false;
-      }
+    const hasActualData =
+      dataRows.some((row) => {
+        if (!Array.isArray(row)) {
+          return false;
+        }
 
-      return row.some((cell) => {
-        return String(cell ?? "").trim() !== "";
+        return row.some((cell) => {
+          return (
+            String(cell ?? "").trim() !== ""
+          );
+        });
       });
-    });
 
     if (!hasActualData) {
-      console.log(
-        "NO ACTUAL DATA - HISTORY WILL NOT BE CREATED"
-      );
-
       return res.status(400).json({
         success: false,
-        message: "Excel contains headers but no data rows",
+        message:
+          "Excel contains headers but no data rows",
       });
     }
 
@@ -409,10 +454,11 @@ const bulkUploadLocationMain = async (req, res) => {
     // CONVERT EXCEL TO OBJECT ROWS
     // ======================================
 
-    const rows = XLSX.utils.sheet_to_json(sheet, {
-      defval: "",
-      blankrows: false,
-    });
+    const rows =
+      XLSX.utils.sheet_to_json(sheet, {
+        defval: "",
+        blankrows: false,
+      });
 
     console.log(
       "OBJECT ROW COUNT:",
@@ -420,18 +466,27 @@ const bulkUploadLocationMain = async (req, res) => {
     );
 
     // ======================================
-    // REMOVE COMPLETELY EMPTY OBJECT ROWS
+    // REMOVE EMPTY OBJECT ROWS
     // ======================================
 
-    const validRows = rows.filter((row) => {
-      if (!row || typeof row !== "object") {
-        return false;
-      }
+    const validRows =
+      rows.filter((row) => {
+        if (
+          !row ||
+          typeof row !== "object"
+        ) {
+          return false;
+        }
 
-      return Object.values(row).some((value) => {
-        return String(value ?? "").trim() !== "";
+        return Object.values(row).some(
+          (value) => {
+            return (
+              String(value ?? "").trim() !==
+              ""
+            );
+          }
+        );
       });
-    });
 
     console.log(
       "VALID DATA ROW COUNT:",
@@ -439,19 +494,55 @@ const bulkUploadLocationMain = async (req, res) => {
     );
 
     // ======================================
-    // FINAL NO DATA CHECK
+    // FINAL DATA CHECK
     // ======================================
 
     if (validRows.length === 0) {
-      console.log(
-        "VALID ROWS = 0 - HISTORY WILL NOT BE CREATED"
-      );
-
       return res.status(400).json({
         success: false,
-        message: "Excel contains headers but no data rows",
+        message:
+          "Excel contains headers but no data rows",
       });
     }
+
+    // ======================================
+    // UPLOAD ORIGINAL EXCEL TO CLOUDINARY
+    // ======================================
+
+    console.log(
+      "======================================"
+    );
+
+    console.log(
+      "UPLOADING EXCEL TO CLOUDINARY"
+    );
+
+    console.log(
+      "Excel:",
+      excelFile.originalname
+    );
+
+    console.log(
+      "======================================"
+    );
+
+    const excelFileUrl =
+      await uploadToCloudinary(
+        excelFile.path,
+        "location-main/bulk-excel",
+        "raw"
+      );
+
+    if (!excelFileUrl) {
+      throw new Error(
+        "Cloudinary Excel URL not returned"
+      );
+    }
+
+    console.log(
+      "EXCEL CLOUDINARY URL:",
+      excelFileUrl
+    );
 
     // ======================================
     // CREATE UNIQUE TEMP ID
@@ -468,22 +559,32 @@ const bulkUploadLocationMain = async (req, res) => {
     // MAIN ZIP EXTRACT FOLDER
     // ======================================
 
-    mainExtractFolder = path.join(
-      __dirname,
-      "../uploads/location-main-temp-main-" + tempId
-    );
+    mainExtractFolder =
+      path.join(
+        __dirname,
+        "../uploads/location-main-temp-main-" +
+          tempId
+      );
 
-    fs.mkdirSync(mainExtractFolder, {
-      recursive: true,
-    });
+    fs.mkdirSync(
+      mainExtractFolder,
+      {
+        recursive: true,
+      }
+    );
 
     // ======================================
     // EXTRACT MAIN ZIP
     // ======================================
 
-    console.log("Extracting Main ZIP...");
+    console.log(
+      "Extracting Main ZIP..."
+    );
 
-    const mainZip = new AdmZip(mainZipFile.path);
+    const mainZip =
+      new AdmZip(
+        mainZipFile.path
+      );
 
     mainZip.extractAllTo(
       mainExtractFolder,
@@ -500,21 +601,28 @@ const bulkUploadLocationMain = async (req, res) => {
     // ======================================
 
     if (galleryZipFile) {
-      galleryExtractFolder = path.join(
-        __dirname,
-        "../uploads/location-main-temp-gallery-" +
-          tempId
+      galleryExtractFolder =
+        path.join(
+          __dirname,
+          "../uploads/location-main-temp-gallery-" +
+            tempId
+        );
+
+      fs.mkdirSync(
+        galleryExtractFolder,
+        {
+          recursive: true,
+        }
       );
 
-      fs.mkdirSync(galleryExtractFolder, {
-        recursive: true,
-      });
-
-      console.log("Extracting Gallery ZIP...");
-
-      const galleryZip = new AdmZip(
-        galleryZipFile.path
+      console.log(
+        "Extracting Gallery ZIP..."
       );
+
+      const galleryZip =
+        new AdmZip(
+          galleryZipFile.path
+        );
 
       galleryZip.extractAllTo(
         galleryExtractFolder,
@@ -529,29 +637,66 @@ const bulkUploadLocationMain = async (req, res) => {
 
     // ======================================
     // CREATE HISTORY
-    // IMPORTANT:
-    // ONLY AFTER EXCEL VALIDATION
     // ======================================
 
-    console.log("======================================");
-    console.log("CREATING BULK UPLOAD HISTORY");
-    console.log("FILE:", excelFile.originalname);
-    console.log("VALID ROWS:", validRows.length);
-    console.log("======================================");
+    console.log(
+      "======================================"
+    );
 
-    history = await LocationMainBulkUpload.create({
-      fileName: excelFile.originalname,
-      excelFile: excelFile.originalname,
-      mainZipFile: mainZipFile.originalname,
-      galleryZipFile: galleryZipFile
-        ? galleryZipFile.originalname
-        : "",
-      status: "Processing",
-      totalRecords: validRows.length,
-      successRecords: 0,
-      failedRecords: 0,
-      errorLog: [],
-    });
+    console.log(
+      "CREATING BULK UPLOAD HISTORY"
+    );
+
+    console.log(
+      "FILE:",
+      excelFile.originalname
+    );
+
+    console.log(
+      "EXCEL URL:",
+      excelFileUrl
+    );
+
+    console.log(
+      "VALID ROWS:",
+      validRows.length
+    );
+
+    console.log(
+      "======================================"
+    );
+
+    history =
+      await LocationMainBulkUpload.create({
+        fileName:
+          excelFile.originalname,
+
+        excelFile:
+          excelFile.originalname,
+
+        // NEW
+        excelFileUrl:
+          excelFileUrl,
+
+        mainZipFile:
+          mainZipFile.originalname,
+
+        galleryZipFile:
+          galleryZipFile
+            ? galleryZipFile.originalname
+            : "",
+
+        status: "Processing",
+
+        totalRecords:
+          validRows.length,
+
+        successRecords: 0,
+
+        failedRecords: 0,
+
+        errorLog: [],
+      });
 
     console.log(
       "HISTORY CREATED:",
@@ -571,7 +716,11 @@ const bulkUploadLocationMain = async (req, res) => {
     // PROCESS EACH ROW
     // ======================================
 
-    for (let i = 0; i < validRows.length; i++) {
+    for (
+      let i = 0;
+      i < validRows.length;
+      i++
+    ) {
       const row = validRows[i];
 
       let locationName = "";
@@ -590,28 +739,34 @@ const bulkUploadLocationMain = async (req, res) => {
         // ==================================
 
         locationName =
-          row["Location Name"]?.toString().trim() ||
-          "";
+          row["Location Name"]
+            ?.toString()
+            .trim() || "";
 
         const siteName =
-          row["Site Name"]?.toString().trim() ||
-          "";
+          row["Site Name"]
+            ?.toString()
+            .trim() || "";
 
         const excelSlug =
-          row["Slug"]?.toString().trim() ||
-          "";
+          row["Slug"]
+            ?.toString()
+            .trim() || "";
 
         const mediaType =
-          row["Media Type"]?.toString().trim() ||
-          "";
+          row["Media Type"]
+            ?.toString()
+            .trim() || "";
 
         const imageName =
-          row["Featured Image"]?.toString().trim() ||
-          "";
+          row["Featured Image"]
+            ?.toString()
+            .trim() || "";
 
         const ytVideoLink =
-          row["YT Video Link"]?.toString().trim() ||
-          "";
+          row["YT Video Link"]
+            ?.toString()
+            .trim() || "";
 
         const galleryValue =
           row["Media Gallery Images"]
@@ -619,44 +774,54 @@ const bulkUploadLocationMain = async (req, res) => {
             .trim() || "";
 
         const detail =
-          row["Summary"]?.toString().trim() ||
-          "";
+          row["Summary"]
+            ?.toString()
+            .trim() || "";
 
         const media =
-          row["Media"]?.toString().trim() ||
-          "";
+          row["Media"]
+            ?.toString()
+            .trim() || "";
 
         const type =
-          row["Type"]?.toString().trim() ||
-          "";
+          row["Type"]
+            ?.toString()
+            .trim() || "";
 
         const siteCode =
-          row["Site Code"]?.toString().trim() ||
-          "";
+          row["Site Code"]
+            ?.toString()
+            .trim() || "";
 
         const latitude =
-          row["Latitude"]?.toString().trim() ||
-          "";
+          row["Latitude"]
+            ?.toString()
+            .trim() || "";
 
         const longitude =
-          row["Longitude"]?.toString().trim() ||
-          "";
+          row["Longitude"]
+            ?.toString()
+            .trim() || "";
 
         const metaTitle =
-          row["Meta Title"]?.toString().trim() ||
-          "";
+          row["Meta Title"]
+            ?.toString()
+            .trim() || "";
 
         const metaKeywords =
-          row["Meta Keywords"]?.toString().trim() ||
-          "";
+          row["Meta Keywords"]
+            ?.toString()
+            .trim() || "";
 
         const metaDescription =
-          row["Meta Description"]?.toString().trim() ||
-          "";
+          row["Meta Description"]
+            ?.toString()
+            .trim() || "";
 
         const mainImageAlt =
-          row["Main Image Alt"]?.toString().trim() ||
-          "";
+          row["Main Image Alt"]
+            ?.toString()
+            .trim() || "";
 
         const featuredImageAlt =
           row["Featured Image Alt"]
@@ -664,8 +829,9 @@ const bulkUploadLocationMain = async (req, res) => {
             .trim() || "";
 
         const schemaCode =
-          row["Schema Code"]?.toString().trim() ||
-          "";
+          row["Schema Code"]
+            ?.toString()
+            .trim() || "";
 
         // ==================================
         // REQUIRED VALIDATION
@@ -701,7 +867,8 @@ const bulkUploadLocationMain = async (req, res) => {
 
         const location =
           await Location.findOne({
-            locationName: locationName,
+            locationName:
+              locationName,
           });
 
         if (!location) {
@@ -728,14 +895,16 @@ const bulkUploadLocationMain = async (req, res) => {
 
         // ==================================
         // MAIN IMAGE EXTENSION
-        // ONLY WEBP
         // ==================================
 
-        const mainImageExt = path
-          .extname(imageName)
-          .toLowerCase();
+        const mainImageExt =
+          path
+            .extname(imageName)
+            .toLowerCase();
 
-        if (mainImageExt !== ".webp") {
+        if (
+          mainImageExt !== ".webp"
+        ) {
           throw new Error(
             `Image "${imageName}" must be .webp`
           );
@@ -764,25 +933,29 @@ const bulkUploadLocationMain = async (req, res) => {
         let galleryNames = [];
 
         if (galleryValue) {
-          galleryNames = galleryValue
-            .split(",")
-            .map((item) => item.trim())
-            .filter(Boolean);
+          galleryNames =
+            galleryValue
+              .split(",")
+              .map((item) =>
+                item.trim()
+              )
+              .filter(Boolean);
         }
 
         // ==================================
         // MAX 10 GALLERY
         // ==================================
 
-        if (galleryNames.length > 10) {
+        if (
+          galleryNames.length > 10
+        ) {
           throw new Error(
             "Maximum 10 gallery images are allowed"
           );
         }
 
         // ==================================
-        // GALLERY ZIP REQUIRED IF
-        // GALLERY IMAGES ARE SPECIFIED
+        // GALLERY ZIP REQUIRED
         // ==================================
 
         if (
@@ -795,17 +968,24 @@ const bulkUploadLocationMain = async (req, res) => {
         }
 
         // ==================================
-        // VALIDATE GALLERY IMAGES
+        // VALIDATE GALLERY
         // ==================================
 
         const galleryPaths = [];
 
-        for (const galleryName of galleryNames) {
-          const galleryExt = path
-            .extname(galleryName)
-            .toLowerCase();
+        for (
+          const galleryName of galleryNames
+        ) {
+          const galleryExt =
+            path
+              .extname(
+                galleryName
+              )
+              .toLowerCase();
 
-          if (galleryExt !== ".webp") {
+          if (
+            galleryExt !== ".webp"
+          ) {
             throw new Error(
               `Gallery image "${galleryName}" must be .webp`
             );
@@ -823,16 +1003,19 @@ const bulkUploadLocationMain = async (req, res) => {
             );
           }
 
-          galleryPaths.push(galleryPath);
+          galleryPaths.push(
+            galleryPath
+          );
         }
 
         // ==================================
         // GENERATE SLUG
         // ==================================
 
-        const finalSlug = excelSlug
-          ? slugify(excelSlug)
-          : slugify(siteName);
+        const finalSlug =
+          excelSlug
+            ? slugify(excelSlug)
+            : slugify(siteName);
 
         if (!finalSlug) {
           throw new Error(
@@ -897,7 +1080,9 @@ const bulkUploadLocationMain = async (req, res) => {
             );
           }
 
-          galleryImages.push(galleryUrl);
+          galleryImages.push(
+            galleryUrl
+          );
         }
 
         // ==================================
@@ -905,7 +1090,8 @@ const bulkUploadLocationMain = async (req, res) => {
         // ==================================
 
         await LocationMain.create({
-          locationId: location._id,
+          locationId:
+            location._id,
 
           siteName,
 
@@ -916,7 +1102,8 @@ const bulkUploadLocationMain = async (req, res) => {
           ytVideoLink:
             ytVideoLink || "",
 
-          mediaGallery: galleryImages,
+          mediaGallery:
+            galleryImages,
 
           detail: detail || "",
 
@@ -979,8 +1166,11 @@ const bulkUploadLocationMain = async (req, res) => {
 
         errorLog.push({
           rowNo: i + 2,
+
           locationName,
-          message: errorMessage,
+
+          message:
+            errorMessage,
         });
       }
     }
@@ -1002,7 +1192,8 @@ const bulkUploadLocationMain = async (req, res) => {
       history.errorLog =
         errorLog;
 
-      history.status = "Completed";
+      history.status =
+        "Completed";
 
       await history.save();
 
@@ -1015,22 +1206,6 @@ const bulkUploadLocationMain = async (req, res) => {
     // ======================================
     // RESPONSE
     // ======================================
-
-    console.log("======================================");
-    console.log("BULK UPLOAD COMPLETED");
-    console.log(
-      "TOTAL:",
-      validRows.length
-    );
-    console.log(
-      "SUCCESS:",
-      successCount
-    );
-    console.log(
-      "FAILED:",
-      failedCount
-    );
-    console.log("======================================");
 
     return res.status(200).json({
       success: true,
@@ -1055,29 +1230,23 @@ const bulkUploadLocationMain = async (req, res) => {
     // ======================================
 
     console.error(
-      "======================================"
-    );
-
-    console.error(
       "Location Main Bulk Upload Error:",
       error
     );
 
-    console.error(
-      "======================================"
-    );
-
     // ======================================
-    // UPDATE HISTORY AS FAILED
+    // UPDATE HISTORY FAILED
     // ======================================
 
     if (history) {
       try {
-        history.status = "Failed";
+        history.status =
+          "Failed";
 
         history.errorLog = [
           {
             rowNo: 0,
+
             message:
               error?.message ||
               "Bulk upload failed",
@@ -1108,15 +1277,16 @@ const bulkUploadLocationMain = async (req, res) => {
     try {
       if (
         mainExtractFolder &&
-        fs.existsSync(mainExtractFolder)
+        fs.existsSync(
+          mainExtractFolder
+        )
       ) {
-        fs.rmSync(mainExtractFolder, {
-          recursive: true,
-          force: true,
-        });
-
-        console.log(
-          "Main temp folder deleted"
+        fs.rmSync(
+          mainExtractFolder,
+          {
+            recursive: true,
+            force: true,
+          }
         );
       }
     } catch (cleanupError) {
@@ -1133,15 +1303,16 @@ const bulkUploadLocationMain = async (req, res) => {
     try {
       if (
         galleryExtractFolder &&
-        fs.existsSync(galleryExtractFolder)
+        fs.existsSync(
+          galleryExtractFolder
+        )
       ) {
-        fs.rmSync(galleryExtractFolder, {
-          recursive: true,
-          force: true,
-        });
-
-        console.log(
-          "Gallery temp folder deleted"
+        fs.rmSync(
+          galleryExtractFolder,
+          {
+            recursive: true,
+            force: true,
+          }
         );
       }
     } catch (cleanupError) {
@@ -1152,7 +1323,7 @@ const bulkUploadLocationMain = async (req, res) => {
     }
 
     // ======================================
-    // DELETE EXCEL
+    // DELETE EXCEL TEMP FILE
     // ======================================
 
     try {
@@ -1163,10 +1334,8 @@ const bulkUploadLocationMain = async (req, res) => {
         excelPath &&
         fs.existsSync(excelPath)
       ) {
-        fs.unlinkSync(excelPath);
-
-        console.log(
-          "Excel temp file deleted"
+        fs.unlinkSync(
+          excelPath
         );
       }
     } catch (cleanupError) {
@@ -1177,7 +1346,7 @@ const bulkUploadLocationMain = async (req, res) => {
     }
 
     // ======================================
-    // DELETE MAIN ZIP
+    // DELETE MAIN ZIP TEMP FILE
     // ======================================
 
     try {
@@ -1188,10 +1357,8 @@ const bulkUploadLocationMain = async (req, res) => {
         mainZipPath &&
         fs.existsSync(mainZipPath)
       ) {
-        fs.unlinkSync(mainZipPath);
-
-        console.log(
-          "Main ZIP temp file deleted"
+        fs.unlinkSync(
+          mainZipPath
         );
       }
     } catch (cleanupError) {
@@ -1202,7 +1369,7 @@ const bulkUploadLocationMain = async (req, res) => {
     }
 
     // ======================================
-    // DELETE GALLERY ZIP
+    // DELETE GALLERY ZIP TEMP FILE
     // ======================================
 
     try {
@@ -1211,12 +1378,12 @@ const bulkUploadLocationMain = async (req, res) => {
 
       if (
         galleryZipPath &&
-        fs.existsSync(galleryZipPath)
+        fs.existsSync(
+          galleryZipPath
+        )
       ) {
-        fs.unlinkSync(galleryZipPath);
-
-        console.log(
-          "Gallery ZIP temp file deleted"
+        fs.unlinkSync(
+          galleryZipPath
         );
       }
     } catch (cleanupError) {
@@ -1227,13 +1394,7 @@ const bulkUploadLocationMain = async (req, res) => {
     }
 
     console.log(
-      "======================================"
-    );
-    console.log(
       "BULK UPLOAD CLEANUP COMPLETED"
-    );
-    console.log(
-      "======================================"
     );
   }
 };
@@ -1242,143 +1403,227 @@ const bulkUploadLocationMain = async (req, res) => {
 // LIST BULK UPLOAD HISTORY
 // ==========================================
 
-const getLocationMainBulkUploadList = async (
-  req,
-  res
-) => {
-  try {
-    const page =
-      Number(req.query.page) || 1;
+const getLocationMainBulkUploadList =
+  async (req, res) => {
+    try {
+      const page =
+        Number(req.query.page) || 1;
 
-    const limit =
-      Number(req.query.limit) || 10;
+      const limit =
+        Number(req.query.limit) || 10;
 
-    const search =
-      req.query.search
-        ?.toString()
-        .trim() || "";
+      const search =
+        req.query.search
+          ?.toString()
+          .trim() || "";
 
-    const skip =
-      (page - 1) * limit;
+      const skip =
+        (page - 1) * limit;
 
-    const filter = {};
+      const filter = {};
 
-    // ======================================
-    // SEARCH BY FILE NAME
-    // ======================================
+      // ====================================
+      // SEARCH BY FILE NAME
+      // ====================================
 
-    if (search) {
-      filter.fileName = {
-        $regex: search,
-        $options: "i",
-      };
-    }
+      if (search) {
+        filter.fileName = {
+          $regex: search,
+          $options: "i",
+        };
+      }
 
-    // ======================================
-    // GET RECORDS + TOTAL
-    // ======================================
+      // ====================================
+      // GET RECORDS + TOTAL
+      // ====================================
 
-    const [
-      records,
-      total,
-    ] = await Promise.all([
-      LocationMainBulkUpload.find(
-        filter
-      )
-        .sort({
-          createdAt: -1,
-        })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-
-      LocationMainBulkUpload.countDocuments(
-        filter
-      ),
-    ]);
-
-    // ======================================
-    // RESPONSE
-    // ======================================
-
-    return res.status(200).json({
-      success: true,
-
-      data: records,
-
-      pagination: {
+      const [
+        records,
         total,
+      ] = await Promise.all([
+        LocationMainBulkUpload.find(
+          filter
+        )
+          .sort({
+            createdAt: -1,
+          })
+          .skip(skip)
+          .limit(limit)
+          .lean(),
 
-        page,
+        LocationMainBulkUpload.countDocuments(
+          filter
+        ),
+      ]);
 
-        limit,
+      // ====================================
+      // RESPONSE
+      // ====================================
 
-        totalPages:
-          Math.ceil(total / limit),
-      },
-    });
-  } catch (error) {
-    console.error(
-      "Get Location Main Bulk Upload List Error:",
-      error
-    );
+      return res.status(200).json({
+        success: true,
 
-    return res.status(500).json({
-      success: false,
+        data: records,
 
-      message:
-        "Failed to fetch bulk upload list",
+        pagination: {
+          total,
 
-      error:
-        error?.message ||
-        "Unknown error",
-    });
-  }
-};
+          page,
+
+          limit,
+
+          totalPages:
+            Math.ceil(
+              total / limit
+            ),
+        },
+      });
+    } catch (error) {
+      console.error(
+        "Get Location Main Bulk Upload List Error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+
+        message:
+          "Failed to fetch bulk upload list",
+
+        error:
+          error?.message ||
+          "Unknown error",
+      });
+    }
+  };
 
 // ==========================================
 // GET BULK UPLOAD DETAIL
 // ==========================================
 
-const getLocationMainBulkUploadDetail = async (
-  req,
-  res
-) => {
-  try {
-    const record =
-      await LocationMainBulkUpload.findById(
-        req.params.id
-      ).lean();
+const getLocationMainBulkUploadDetail =
+  async (req, res) => {
+    try {
+      const record =
+        await LocationMainBulkUpload.findById(
+          req.params.id
+        ).lean();
 
-    if (!record) {
-      return res.status(404).json({
+      if (!record) {
+        return res.status(404).json({
+          success: false,
+
+          message:
+            "Bulk upload record not found",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+
+        data: record,
+      });
+    } catch (error) {
+      console.error(
+        "Get Location Main Bulk Upload Detail Error:",
+        error
+      );
+
+      return res.status(500).json({
         success: false,
 
         message:
-          "Bulk upload record not found",
+          error?.message ||
+          "Failed to fetch bulk upload detail",
       });
     }
+  };
 
-    return res.status(200).json({
-      success: true,
+// ==========================================
+// DOWNLOAD EXCEL
+// ==========================================
+const downloadLocationMainBulkUploadExcel = async (req, res) => {
+    try {
+      const record =
+        await LocationMainBulkUpload.findById(
+          req.params.id
+        ).lean();
 
-      data: record,
-    });
-  } catch (error) {
-    console.error(
-      "Get Location Main Bulk Upload Detail Error:",
-      error
-    );
+      if (!record) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Bulk upload record not found",
+        });
+      }
 
-    return res.status(500).json({
-      success: false,
+      if (!record.excelFileUrl) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Excel file not available",
+        });
+      }
 
-      message:
-        error?.message ||
-        "Failed to fetch bulk upload detail",
-    });
-  }
-};
+      // ====================================
+      // FETCH EXCEL FROM CLOUDINARY
+      // ====================================
+
+      const response = await fetch(
+        record.excelFileUrl
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          "Failed to fetch Excel from Cloudinary"
+        );
+      }
+
+      const arrayBuffer =
+        await response.arrayBuffer();
+
+      const buffer =
+        Buffer.from(arrayBuffer);
+
+      // ====================================
+      // DOWNLOAD HEADERS
+      // ====================================
+
+      res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      );
+
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${record.fileName}"`
+      );
+
+      res.setHeader(
+        "Content-Length",
+        buffer.length
+      );
+
+      // ====================================
+      // SEND FILE
+      // ====================================
+
+      return res.send(buffer);
+    } catch (error) {
+      console.error(
+        "Download Excel Error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+
+        message:
+          error?.message ||
+          "Failed to download Excel",
+      });
+    }
+  };
 
 // ==========================================
 // EXPORT
@@ -1386,6 +1631,10 @@ const getLocationMainBulkUploadDetail = async (
 
 module.exports = {
   bulkUploadLocationMain,
+
   getLocationMainBulkUploadList,
+
   getLocationMainBulkUploadDetail,
+
+  downloadLocationMainBulkUploadExcel,
 };

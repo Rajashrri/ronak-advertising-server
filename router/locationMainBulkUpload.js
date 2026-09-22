@@ -8,11 +8,15 @@ const locationMainBulkUpload =
 const {
   bulkUploadLocationMain,
   getLocationMainBulkUploadList,
-  getLocationMainBulkUploadDetail,
+  getLocationMainBulkUploadDetail,downloadLocationMainBulkUploadExcel
 } = require(
   "../controllers/locationMainBulkUploadController"
 );
-
+// DOWNLOAD EXCEL
+router.get(
+  "/download/:id",
+  downloadLocationMainBulkUploadExcel
+);
 // ======================================
 // LIST
 // ======================================

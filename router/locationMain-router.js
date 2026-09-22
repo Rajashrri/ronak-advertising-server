@@ -13,7 +13,8 @@ const {
   changeStatus,
   getActiveLocations,
   deleteGalleryImage,
-  updateLocationSeo
+  updateLocationSeo,
+  
 } = require("../controllers/locationMainController");
 
 // ==========================
@@ -77,6 +78,8 @@ router.put(
   updateLocationMain
 );
 
+
+
 // ==========================
 // DELETE
 // ==========================
@@ -99,4 +102,6 @@ router.patch(
   "/update-location-seo/:id",
   updateLocationSeo
 );
+
+
 module.exports = router;

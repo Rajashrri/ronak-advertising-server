@@ -11,6 +11,10 @@ const locationMainBulkUploadSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+ excelFileUrl: {
+      type: String,
+      default: "",
+    },
 
     zipFile: {
       type: String,
