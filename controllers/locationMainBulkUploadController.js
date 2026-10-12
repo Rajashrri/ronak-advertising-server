@@ -34,6 +34,9 @@ const ALLOWED_MEDIA_TYPES = [
   "Cantilever",
   "BQS (Bus Shelter)",
   "Kiosk",
+  "Billboard",
+  "LED",
+  "N-lit"
 ];
 
 // ==========================================
