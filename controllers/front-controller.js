@@ -93,7 +93,7 @@ const addPopupEnquiry = async (req, res) => {
 
    sendMail(
   email,
-  "rajashri@digihost.in",
+  "Rehatvig@gmail.com",
    "New Location Enquiry",
   `
   <p><strong>Dear Admin,</strong></p>
@@ -197,7 +197,7 @@ const addLocationEnquiry = async (req, res) => {
     });
 sendMail(
   email,
-  "rajashri@digihost.in",
+  "Rehatvig@gmail.com",
   "New Location Enquiry",
   `
   <p><strong>Dear Admin,</strong></p>
@@ -315,7 +315,7 @@ const addCareer = async (req, res) => {
     // SEND MAIL IN BACKGROUND
     sendMail(
       email,
-      "rajashri@digihost.in",
+      "Rehatvig@gmail.com",
       "New Career Application",
       `
       <p><b>Dear Admin,</b></p>
@@ -398,7 +398,7 @@ const subscribeNewsletter = async (req, res) => {
     // Mail in background
     sendMail(
       email,
-      "rajashri@digihost.in",
+      "Rehatvig@gmail.com",
       "Newsletter Subscription",
       `
       <p><b>Dear Admin,</b></p>
@@ -462,7 +462,7 @@ const addContact = async (req, res) => {
     // Send mail in background
 sendMail(
   email,
-  "rajashri@digihost.in",
+  "Rehatvig@gmail.com",
   "New Contact Inquiry",
   `
   <p><strong>Dear Admin,</strong></p>
