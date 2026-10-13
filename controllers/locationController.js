@@ -13,7 +13,15 @@ const slugify = (text) =>
 
 const addLocation = async (req, res) => {
   try {
-    const { locationName, audience_reach, media_sites, ideal } = req.body;
+    const {
+      locationName,
+      audience_reach,
+      media_sites,
+      ideal,
+      totaleye,
+      billboards,
+      brands,
+    } = req.body;
 
     if (!locationName) {
       return res.status(400).json({
@@ -54,6 +62,9 @@ const addLocation = async (req, res) => {
       slug,
       ideal,
       image,
+      brands,
+      billboards,
+      totaleye,
       status: 1,
     });
 
@@ -73,11 +84,7 @@ const addLocation = async (req, res) => {
 
 const listLocations = async (req, res) => {
   try {
-    const {
-      page = 1,
-      limit = 10,
-      search = "",
-    } = req.query;
+    const { page = 1, limit = 10, search = "" } = req.query;
 
     const pageNumber = parseInt(page);
     const limitNumber = parseInt(limit);
@@ -93,9 +100,7 @@ const listLocations = async (req, res) => {
         }
       : {};
 
-    const total = await Location.countDocuments(
-      searchCondition
-    );
+    const total = await Location.countDocuments(searchCondition);
 
     const data = await Location.find(searchCondition)
       .sort({ createdAt: -1 })
@@ -109,9 +114,7 @@ const listLocations = async (req, res) => {
         total,
         page: pageNumber,
         limit: limitNumber,
-        totalPages: Math.ceil(
-          total / limitNumber
-        ),
+        totalPages: Math.ceil(total / limitNumber),
       },
     });
   } catch (error) {
@@ -166,6 +169,9 @@ const updateLocation = async (req, res) => {
       location.media_sites = req.body.media_sites;
       location.ideal = req.body.ideal;
 
+      location.totaleye = req.body.totaleye;
+      location.billboards = req.body.billboards;
+      location.brands = req.body.brands;
       const slug = slugify(req.body.locationName);
 
       const existingSlug = await Location.findOne({

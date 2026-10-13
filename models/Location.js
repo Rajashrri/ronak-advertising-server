@@ -28,6 +28,21 @@ const locationSchema = new mongoose.Schema(
       type: String,
       unique: true,
     },
+
+     totaleye: {
+      type: String,
+      required: true,
+    },
+
+     billboards: {
+      type: String,
+      required: true,
+    },
+
+     brands: {
+      type: String,
+      required: true,
+    },
     status: {
       type: Number,
       default: 1,
